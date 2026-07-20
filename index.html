@@ -419,15 +419,72 @@
   }
   .tf-submit:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(23,195,123,.35); }
   .tf-note { margin-top: 14px; font-size: 12.5px; color: var(--ink-soft); text-align: center; }
-  .tf-success {
-    display: none; text-align: center; padding: 28px 10px;
+
+  /* ---------- 留资弹窗（腾讯文档表单） ---------- */
+  .qq-modal {
+    position: fixed; inset: 0; z-index: 300; display: none;
+    align-items: center; justify-content: center; padding: 20px;
+    background: rgba(6, 14, 26, .72); backdrop-filter: blur(6px);
   }
-  .tf-success .ok-ico {
-    width: 60px; height: 60px; margin: 0 auto 18px; border-radius: 50%; font-size: 28px;
-    background: rgba(23,195,123,.12); color: var(--green-dark); display: grid; place-items: center;
+  .qq-modal.open { display: flex; }
+  body.qq-open { overflow: hidden; }
+  .qq-panel {
+    background: var(--navy-2); color: #fff;
+    border: 1px solid rgba(23,195,123,.28); border-radius: 18px;
+    width: 100%; max-width: 560px; max-height: 92vh;
+    display: flex; flex-direction: column; overflow: hidden;
+    box-shadow: 0 24px 70px rgba(0,0,0,.55); animation: fadeUp .3s ease;
   }
-  .tf-success h3 { font-size: 20px; margin-bottom: 8px; }
-  .tf-success p { font-size: 14.5px; color: var(--ink-soft); }
+  .qq-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,.08); flex: none;
+  }
+  .qq-head h3 { font-size: 17px; font-weight: 700; }
+  .qq-head .qq-sub { font-size: 12.5px; color: rgba(255,255,255,.5); margin-top: 3px; }
+  .qq-close {
+    width: 34px; height: 34px; flex: none; border: none; border-radius: 50%;
+    background: rgba(255,255,255,.08); color: #fff; font-size: 16px; line-height: 1;
+    cursor: pointer; font-family: inherit; transition: background .2s;
+  }
+  .qq-close:hover { background: rgba(255,255,255,.18); }
+  .qq-body { position: relative; background: #fff; flex: none; }
+  .qq-frame { width: 100%; height: min(600px, 62vh); border: 0; display: block; }
+  .qq-spinner, .qq-fallback {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 16px; text-align: center;
+    padding: 30px; background: var(--navy-2); color: #fff;
+  }
+  .qq-fallback { display: none; }
+  .qq-fallback.show { display: flex; }
+  .qq-spinner.hide { display: none; }
+  .qq-spinner .ring {
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 3px solid rgba(23,195,123,.25); border-top-color: var(--green);
+    animation: qqspin .8s linear infinite;
+  }
+  .qq-spinner span { font-size: 14px; color: rgba(255,255,255,.6); }
+  @keyframes qqspin { to { transform: rotate(360deg); } }
+  .qq-fallback .fb-ico { font-size: 34px; }
+  .qq-fallback p { font-size: 15px; color: rgba(255,255,255,.82); max-width: 300px; line-height: 1.75; }
+  .qq-open-btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 13px 28px;
+    border-radius: 999px; font: inherit; font-size: 15.5px; font-weight: 700;
+    background: linear-gradient(100deg, var(--green), var(--cyan)); color: var(--navy);
+    border: none; cursor: pointer; transition: transform .2s, box-shadow .2s;
+  }
+  .qq-open-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(23,195,123,.4); }
+  .qq-foot {
+    padding: 12px 20px; border-top: 1px solid rgba(255,255,255,.08);
+    text-align: center; font-size: 12.5px; color: rgba(255,255,255,.5); flex: none;
+  }
+  .qq-foot button {
+    background: none; border: none; font: inherit; color: var(--green);
+    cursor: pointer; padding: 0; text-decoration: underline; text-underline-offset: 2px;
+  }
+  @media (max-width: 560px) {
+    .qq-modal { padding: 12px; }
+    .qq-frame { height: 66vh; }
+  }
   footer { background: var(--navy); color: rgba(255,255,255,.5); padding: 36px 0; font-size: 13px; border-top: 1px solid rgba(255,255,255,.07); }
   .foot-inner { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; align-items: center; }
 
@@ -835,16 +892,16 @@
       <form id="leadForm">
         <div class="tf-grid">
           <div class="tf-field">
-            <label for="lfName">怎么称呼你 <em>*</em></label>
-            <input id="lfName" name="name" type="text" required placeholder="你的称呼" autocomplete="name">
+            <label for="lfName">怎么称呼你</label>
+            <input id="lfName" name="name" type="text" placeholder="你的称呼" autocomplete="name">
           </div>
           <div class="tf-field">
             <label for="lfCompany">公司 / 团队</label>
             <input id="lfCompany" name="company" type="text" placeholder="选填" autocomplete="organization">
           </div>
           <div class="tf-field full">
-            <label for="lfContact">手机 / 微信 / 邮箱 <em>*</em></label>
-            <input id="lfContact" name="contact" type="text" required placeholder="方便联系到你的方式">
+            <label for="lfContact">手机 / 微信 / 邮箱</label>
+            <input id="lfContact" name="contact" type="text" placeholder="方便联系到你的方式">
           </div>
           <div class="tf-field full">
             <label for="lfNeed">你最想让纳米Work帮你做的一件事</label>
@@ -852,16 +909,39 @@
           </div>
         </div>
         <button class="tf-submit" type="submit">让纳米Work先帮我干一件事 →</button>
-        <p class="tf-note">提交即表示同意我们通过你留下的方式与你联系，信息仅用于试用对接。</p>
+        <p class="tf-note">点击后打开登记表填写，我们会尽快带着针对你场景的用法与你联系。</p>
       </form>
-      <div class="tf-success" id="leadSuccess">
-        <div class="ok-ico">✓</div>
-        <h3 id="leadSuccessTitle">收到！</h3>
-        <p id="leadSuccessMsg">我们会尽快带着针对你场景的用法联系你。</p>
-      </div>
     </div>
   </div>
 </section>
+
+<!-- 留资弹窗：加载腾讯文档收集表 -->
+<div class="qq-modal" id="qqModal" aria-hidden="true">
+  <div class="qq-panel" role="dialog" aria-modal="true" aria-labelledby="qqTitle">
+    <div class="qq-head">
+      <div>
+        <h3 id="qqTitle">填写试用登记</h3>
+        <div class="qq-sub">留下你的需求，纳米Work团队与你对接</div>
+      </div>
+      <button class="qq-close" id="qqClose" aria-label="关闭">✕</button>
+    </div>
+    <div class="qq-body">
+      <iframe class="qq-frame" id="qqFrame" title="纳米Work 试用登记表"></iframe>
+      <div class="qq-spinner" id="qqSpinner">
+        <div class="ring"></div>
+        <span>正在加载登记表…</span>
+      </div>
+      <div class="qq-fallback" id="qqFallback">
+        <div class="fb-ico">📝</div>
+        <p>登记表暂时无法在页面内显示，请点击下方按钮完成登记。</p>
+        <button class="qq-open-btn qq-open-link" type="button">在新标签页打开登记表 →</button>
+      </div>
+    </div>
+    <div class="qq-foot">
+      表单无法显示？<button type="button" class="qq-open-link">在新标签页打开 →</button>
+    </div>
+  </div>
+</div>
 
 <footer>
   <div class="wrap foot-inner">
@@ -1164,45 +1244,58 @@
     if (e.key === 'Escape' && modal.classList.contains('open')) closeCase();
   });
 
-  // 留资表单
-  // 部署前请二选一配置：
-  //   endpoint —— 表单收集服务的提交地址（如 Formspree、金数据等的 API 地址），配置后表单数据将以 JSON POST 到该地址
-  //   email    —— 未配置 endpoint 时的兜底方式：提交会打开访客的邮件客户端，向该邮箱发送留资信息
-  const LEAD_CONFIG = {
-    endpoint: '',
-    email: 'REPLACE_WITH_YOUR_EMAIL@example.com'
-  };
+  // 留资：点击按钮弹出腾讯文档收集表弹窗
+  const QQ_FORM_URL = 'https://docs.qq.com/form/page/DRENudWFaeVRVRU1u';
   const leadForm = document.getElementById('leadForm');
-  leadForm.addEventListener('submit', async e => {
-    e.preventDefault();
-    const data = Object.fromEntries(new FormData(leadForm).entries());
-    const done = (title, msg) => {
-      leadForm.style.display = 'none';
-      document.getElementById('leadSuccessTitle').textContent = title;
-      document.getElementById('leadSuccessMsg').textContent = msg;
-      document.getElementById('leadSuccess').style.display = 'block';
-    };
-    if (LEAD_CONFIG.endpoint) {
-      const btn = leadForm.querySelector('.tf-submit');
-      btn.disabled = true; btn.textContent = '提交中…';
+  const qqModal = document.getElementById('qqModal');
+  const qqFrame = document.getElementById('qqFrame');
+  const qqSpinner = document.getElementById('qqSpinner');
+  const qqFallback = document.getElementById('qqFallback');
+  let qqTimer = null;
+
+  function openQQ() {
+    qqModal.classList.add('open');
+    qqModal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('qq-open');
+    // 复位到加载中状态
+    qqFallback.classList.remove('show');
+    qqSpinner.classList.remove('hide');
+    let done = false;
+    const fail = () => { if (done) return; done = true; qqSpinner.classList.add('hide'); qqFallback.classList.add('show'); };
+    const ok = () => { done = true; qqSpinner.classList.add('hide'); qqFallback.classList.remove('show'); };
+    qqFrame.onload = () => {
+      // 跨域策略拦截时，iframe 仍停留在同源 about:blank（可被读取）；
+      // 真正加载到腾讯文档时读取 href 会抛跨域错误——以此区分成功/被拦截。
+      let blocked = false;
       try {
-        await fetch(LEAD_CONFIG.endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
-        done('收到！', '我们会尽快带着针对你场景的用法联系你。');
-      } catch (err) {
-        btn.disabled = false; btn.textContent = '让纳米Work先帮我干一件事 →';
-        alert('网络异常，提交失败，请稍后重试。');
-      }
-    } else {
-      const body = encodeURIComponent(
-        `称呼：${data.name}\n公司/团队：${data.company || '-'}\n联系方式：${data.contact}\n想解决的问题：${data.need || '-'}`
-      );
-      location.href = `mailto:${LEAD_CONFIG.email}?subject=${encodeURIComponent('纳米Work 试用意向 - ' + data.name)}&body=${body}`;
-      done('邮件已准备好', '已为你打开邮件客户端，点击发送即可完成登记；若未自动打开，请直接与我们联系。');
-    }
+        const href = qqFrame.contentWindow.location.href;
+        if (!href || href === 'about:blank') blocked = true;
+      } catch (e) { blocked = false; }
+      blocked ? fail() : ok();
+    };
+    qqFrame.onerror = fail;
+    qqFrame.src = QQ_FORM_URL;
+    clearTimeout(qqTimer);
+    qqTimer = setTimeout(fail, 3000); // 3 秒内未成功加载即降级为兜底按钮
+  }
+
+  function closeQQ() {
+    qqModal.classList.remove('open');
+    qqModal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('qq-open');
+    clearTimeout(qqTimer);
+    qqFrame.onload = null;
+    qqFrame.src = 'about:blank'; // 释放资源，下次打开重新加载
+  }
+
+  leadForm.addEventListener('submit', e => { e.preventDefault(); openQQ(); });
+  document.getElementById('qqClose').addEventListener('click', closeQQ);
+  qqModal.addEventListener('click', e => { if (e.target === qqModal) closeQQ(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && qqModal.classList.contains('open')) closeQQ();
+  });
+  document.querySelectorAll('.qq-open-link').forEach(el => {
+    el.addEventListener('click', () => window.open(QQ_FORM_URL, '_blank', 'noopener'));
   });
 
   // 支持 #case/<id> 锚点直达某个案例详情
