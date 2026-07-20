@@ -252,6 +252,80 @@
   }
   .case-value::before { content: "→"; color: var(--green-dark); font-weight: 800; }
   .case-note { margin-top: 28px; font-size: 13px; color: var(--ink-soft); text-align: center; }
+  .case-card { cursor: pointer; }
+  .case-card:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
+  .case-more {
+    margin-top: 14px; font-size: 13.5px; font-weight: 600; color: var(--green-dark);
+    display: inline-flex; align-items: center; gap: 4px; transition: gap .2s;
+  }
+  .case-card:hover .case-more { gap: 8px; }
+
+  /* ---------- 案例详情弹窗 ---------- */
+  .case-modal {
+    position: fixed; inset: 0; z-index: 200; display: none;
+    align-items: center; justify-content: center; padding: 20px;
+    background: rgba(10, 22, 40, .55); backdrop-filter: blur(6px);
+  }
+  .case-modal.open { display: flex; }
+  body.modal-open { overflow: hidden; }
+  .cm-panel {
+    background: #fff; border-radius: 20px; max-width: 680px; width: 100%;
+    max-height: 86vh; overflow-y: auto; padding: 40px; position: relative;
+    box-shadow: var(--shadow-lg); animation: fadeUp .3s ease;
+  }
+  .cm-close {
+    position: absolute; top: 18px; right: 18px; width: 36px; height: 36px;
+    border: none; border-radius: 50%; background: var(--bg-soft); color: var(--ink-soft);
+    font-size: 18px; line-height: 1; cursor: pointer; transition: background .2s, color .2s;
+    font-family: inherit;
+  }
+  .cm-close:hover { background: var(--navy); color: #fff; }
+  .cm-head { display: flex; align-items: center; gap: 16px; padding-right: 40px; }
+  .cm-avatar {
+    width: 56px; height: 56px; border-radius: 14px; flex: none; font-size: 26px;
+    background: linear-gradient(135deg, rgba(23,195,123,.15), rgba(45,212,191,.15));
+    display: grid; place-items: center;
+  }
+  .cm-role { font-size: 21px; font-weight: 700; line-height: 1.4; }
+  .cm-group { font-size: 13px; color: var(--ink-soft); margin-top: 2px; }
+  .cm-sec { margin-top: 26px; }
+  .cm-sec h5 {
+    font-size: 12.5px; font-weight: 700; letter-spacing: .14em;
+    color: var(--green-dark); margin-bottom: 12px;
+  }
+  .cm-scene {
+    font-size: 15px; color: var(--ink-soft); background: var(--bg-soft);
+    border-left: 4px solid var(--green); border-radius: 0 10px 10px 0; padding: 14px 18px;
+  }
+  .cm-steps { list-style: none; }
+  .cm-steps li {
+    position: relative; padding: 0 0 18px 44px; font-size: 14.5px; color: var(--ink);
+  }
+  .cm-steps li:last-child { padding-bottom: 0; }
+  .cm-steps li::before {
+    content: attr(data-n); position: absolute; left: 0; top: -1px;
+    width: 28px; height: 28px; border-radius: 50%; font-size: 13px; font-weight: 700;
+    background: rgba(23,195,123,.12); color: var(--green-dark);
+    display: grid; place-items: center;
+  }
+  .cm-steps li:not(:last-child)::after {
+    content: ""; position: absolute; left: 13.5px; top: 30px; bottom: 2px;
+    width: 1px; background: var(--line);
+  }
+  .cm-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .cm-chip {
+    font-size: 13px; color: var(--ink); background: var(--bg-soft);
+    border: 1px solid var(--line); padding: 6px 14px; border-radius: 999px;
+  }
+  .cm-chip.cap { color: var(--green-dark); background: rgba(23,195,123,.08); border-color: rgba(23,195,123,.3); }
+  .cm-value {
+    margin-top: 28px; padding: 16px 18px; border-radius: 12px;
+    background: var(--navy); color: #fff; font-size: 15px; font-weight: 600;
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .cm-value::before { content: "→"; color: var(--green); font-weight: 800; }
+  .cm-note { margin-top: 18px; font-size: 12.5px; color: var(--ink-soft); }
+  @media (max-width: 560px) { .cm-panel { padding: 28px 22px; } .cm-role { font-size: 18px; } }
 
   /* ---------- 纳米卫士 ---------- */
   .guard { background: linear-gradient(180deg, var(--navy) 0%, var(--navy-2) 100%); color: #fff; }
@@ -716,6 +790,38 @@
   </div>
 </footer>
 
+<!-- 案例详情弹窗 -->
+<div class="case-modal" id="caseModal" aria-hidden="true">
+  <div class="cm-panel" role="dialog" aria-modal="true" aria-labelledby="cmRole">
+    <button class="cm-close" id="cmClose" aria-label="关闭详情">✕</button>
+    <div class="cm-head">
+      <div class="cm-avatar" id="cmAvatar"></div>
+      <div>
+        <div class="cm-role" id="cmRole"></div>
+        <div class="cm-group" id="cmGroup"></div>
+      </div>
+    </div>
+    <div class="cm-sec">
+      <h5>场景挑战</h5>
+      <p class="cm-scene" id="cmScene"></p>
+    </div>
+    <div class="cm-sec">
+      <h5>交给纳米Work怎么做</h5>
+      <ol class="cm-steps" id="cmSteps"></ol>
+    </div>
+    <div class="cm-sec">
+      <h5>交付成果</h5>
+      <div class="cm-chips" id="cmOutputs"></div>
+    </div>
+    <div class="cm-sec">
+      <h5>用到的产品能力</h5>
+      <div class="cm-chips" id="cmCaps"></div>
+    </div>
+    <p class="cm-value" id="cmValue"></p>
+    <p class="cm-note">* 案例提炼自用户真实使用记录，涉及具体企业与个人信息均已脱敏处理。</p>
+  </div>
+</div>
+
 <script>
   // 人群 Tab 切换
   document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -744,6 +850,175 @@
     entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
   }, { threshold: 0.12 });
   document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  // 案例详情数据（与 .case-grid 中卡片顺序一一对应，内容出自产品背景资料）
+  const CASE_DETAILS = [
+    {
+      id: 'kefu-guanli', avatar: '🎧', role: '客服 / 运营管理者', group: '职场精英 / 管理者',
+      scene: '海外多个站点的评分要持续监控，全网比价要反复做，晋升述职还要准备 PPT——这些日常重复工作琐碎但一样都不能省。',
+      steps: [
+        '把评分监控、全网比价、述职 PPT 等重复工作交给"自建专家"',
+        'AI 自动拉取各站点数据',
+        '自动生成图片日报、比价表和演示页',
+        '管理者审核成果，下指令、纠错即可'
+      ],
+      outputs: ['图片日报', '全网比价表', '晋升述职演示页'],
+      caps: ['自建专家', '自动拉数与报表生成'],
+      value: '管理者只负责下指令和纠错，重复劳动全部托付给 AI。'
+    },
+    {
+      id: 'zhineng-yingjian', avatar: '📟', role: '智能硬件业务负责人', group: '职场精英 / 管理者',
+      scene: '广告投放数据需要有人随时盯盘，竞品对比与方案评审又要占用团队大量讨论精力。',
+      steps: [
+        '把广告数据盯盘设为定时播报',
+        '整点自动生成进度表，异常自动预警',
+        '把数字员工拉进工作群',
+        '数字员工在群里参与竞品对比与方案评审讨论'
+      ],
+      outputs: ['整点进度表', '自动预警', '群内竞品对比与评审意见'],
+      caps: ['定时任务', '数字员工群协作'],
+      value: '数据盯盘不再靠人守着，AI 员工直接进群干活。'
+    },
+    {
+      id: 'kefu-yunying', avatar: '📞', role: '客服运营负责人', group: '职场精英 / 管理者',
+      scene: '呼叫中心的 KPI 报表、外呼质检、海外客服培训与分析，长期依赖人工翻表整理，耗时费力。',
+      steps: [
+        '搭建自建专家，沉淀报表口径与质检标准',
+        '自动生成呼叫中心 KPI 日报',
+        '自动生成智能外呼质检表',
+        '自动产出海外客服培训课件与分析报告'
+      ],
+      outputs: ['KPI 日报', '智能外呼质检表', '海外客服培训课件', '分析报告'],
+      caps: ['自建专家', '自动化报表'],
+      value: '大幅减少人工翻表工作量，报表、质检、培训一人全管。'
+    },
+    {
+      id: 'yonghu-tiyan', avatar: '🧪', role: '用户体验负责人', group: '职场精英 / 管理者',
+      scene: '新品上市期用户反馈集中涌入，需要按统一口径统计，并把大量反馈整理成结构化、可复用的资产。',
+      steps: [
+        '让专家自动读取飞书跟踪表',
+        '按统一口径统计新增反馈',
+        '对反馈批量打标',
+        '生成结构化标签词典'
+      ],
+      outputs: ['统一口径的反馈统计', '结构化标签词典'],
+      caps: ['飞书生态对接', '批量数据处理'],
+      value: '实现"一人盯住整条新品反馈线"。'
+    },
+    {
+      id: 'gongcheng-xiangmu', avatar: '🏗️', role: '工程项目管理者', group: '职场精英 / 管理者',
+      scene: '项目概算与招标文件专业性强、篇幅大，监理费用是否合理、合同条款有无风险，审查起来通常很耗时。',
+      steps: [
+        '上传项目概算 Excel 与招标文件',
+        '纳米Work自动解析文件，测算监理费用是否合理',
+        '从建设方视角逐条排查招标合同中的风险条款',
+        '当天给出结论'
+      ],
+      outputs: ['监理费用合理性测算', '合同风险条款排查结论'],
+      caps: ['专业文件解析', '风险审查'],
+      value: '复杂专业文件的审查结论，当天就出。'
+    },
+    {
+      id: 'canyin', avatar: '🍜', role: '餐饮企业', group: '中小企业',
+      scene: '品牌的经营标准与打法需要沉淀、复用，但门店人手有限，也不想为此额外招聘。',
+      steps: [
+        '通过问答式对话训练专属的品牌 SOP 专家',
+        '把门店经营的标准与打法沉淀进 AI',
+        '日常经营中随问随用，持续迭代'
+      ],
+      outputs: ['专属品牌 SOP 专家'],
+      caps: ['自建专家', '私有知识沉淀'],
+      value: '一个人指挥一支队伍的经营效果，无需额外招聘。'
+    },
+    {
+      id: 'jiudian', avatar: '🏨', role: '酒店企业', group: '中小企业',
+      scene: '经营中既有开发需求又有咨询需求，单独外包或招聘成本都不低。',
+      steps: [
+        '组建"全栈开发 + 顾问团"专家组合',
+        '开发与咨询工作交由 AI 专家团承接',
+        '能力随取随用，按需扩展'
+      ],
+      outputs: ['全栈开发 + 顾问团专家组合'],
+      caps: ['专家团（多智能体编组）'],
+      value: '省下外包与招聘成本，能力随取随用。'
+    },
+    {
+      id: 'gongcheng-zixun', avatar: '📐', role: '工程咨询企业', group: '中小企业',
+      scene: '小团队既要做好研发支撑，又要在战略层面做出专业判断，双线作战人力吃紧。',
+      steps: [
+        '训练"研发 + 战略顾问团"',
+        'AI 专家团参与研发支撑工作',
+        'AI 专家团参与战略层面的分析判断'
+      ],
+      outputs: ['研发 + 战略顾问团'],
+      caps: ['专家团（多智能体编组）'],
+      value: '小团队也拥有研发与战略双线的专业支撑。'
+    }
+  ];
+
+  const modal = document.getElementById('caseModal');
+  const cards = document.querySelectorAll('.case-card');
+
+  function openCase(i) {
+    const d = CASE_DETAILS[i];
+    if (!d) return;
+    document.getElementById('cmAvatar').textContent = d.avatar;
+    document.getElementById('cmRole').textContent = d.role;
+    document.getElementById('cmGroup').textContent = d.group;
+    document.getElementById('cmScene').textContent = d.scene;
+    document.getElementById('cmSteps').innerHTML =
+      d.steps.map((s, n) => `<li data-n="${n + 1}"></li>`).join('');
+    document.querySelectorAll('#cmSteps li').forEach((li, n) => li.textContent = d.steps[n]);
+    const chips = (list, cls) => list.map(() => `<span class="cm-chip ${cls}"></span>`).join('');
+    const out = document.getElementById('cmOutputs');
+    out.innerHTML = chips(d.outputs, '');
+    out.querySelectorAll('.cm-chip').forEach((c, n) => c.textContent = d.outputs[n]);
+    const cap = document.getElementById('cmCaps');
+    cap.innerHTML = chips(d.caps, 'cap');
+    cap.querySelectorAll('.cm-chip').forEach((c, n) => c.textContent = d.caps[n]);
+    document.getElementById('cmValue').textContent = d.value;
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('modal-open');
+    history.replaceState(null, '', '#case/' + d.id);
+    document.getElementById('cmClose').focus();
+  }
+
+  function closeCase() {
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('modal-open');
+    history.replaceState(null, '', location.pathname + '#cases');
+  }
+
+  cards.forEach((card, i) => {
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('role', 'button');
+    card.setAttribute('aria-label', '查看案例详情');
+    const more = document.createElement('span');
+    more.className = 'case-more';
+    more.textContent = '查看详情 →';
+    card.appendChild(more);
+    card.addEventListener('click', () => openCase(i));
+    card.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openCase(i); }
+    });
+  });
+
+  document.getElementById('cmClose').addEventListener('click', closeCase);
+  modal.addEventListener('click', e => { if (e.target === modal) closeCase(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && modal.classList.contains('open')) closeCase();
+  });
+
+  // 支持 #case/<id> 锚点直达某个案例详情
+  if (location.hash.startsWith('#case/')) {
+    const idx = CASE_DETAILS.findIndex(d => d.id === location.hash.slice(6));
+    if (idx > -1) {
+      document.getElementById('cases').scrollIntoView();
+      openCase(idx);
+    }
+  }
 
   // 交付流程步骤依次点亮
   const flow = document.getElementById('flow');
