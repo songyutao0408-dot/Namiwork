@@ -6,6 +6,13 @@
 <meta name="theme-color" content="#5b6cff">
 <meta name="description" content="轻提醒 · 一个极简的日程提醒 App：输入文字、设定时间、到点即时提醒。">
 <title>轻提醒 · 到点就叫你</title>
+<!-- PWA：可安装到手机主屏、离线可用 -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="轻提醒">
 <style>
   :root {
     --brand: #5b6cff;
@@ -631,6 +638,13 @@
   updateNotice();
   // fire any that were already due when the app opened
   items.forEach(it => { if (!it.done && !it.fired && it.at <= Date.now()) fire(it.id); });
+
+  // register service worker (offline + installable)
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js").catch(function () {});
+    });
+  }
 })();
 </script>
 </body>
