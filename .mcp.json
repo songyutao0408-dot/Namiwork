@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "tencent-docs": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--quiet",
+        "--directory",
+        "${CLAUDE_PROJECT_DIR:-.}/tools/tencent-docs-mcp",
+        "python",
+        "-m",
+        "tencent_docs_mcp.server"
+      ]
+    }
+  }
+}

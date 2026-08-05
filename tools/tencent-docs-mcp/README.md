@@ -60,6 +60,36 @@ claude mcp add tencent-docs \
 
 之后就可以直接说「把这份周报生成 Word 并放到我的腾讯文档里」。
 
+## 4b. 或者：在 claude.ai/code 网页版里用
+
+不用装任何东西，仓库根目录的 `.mcp.json` 已经配好了，云会话会自动启动这个 server
+（用 `uv run` 拉依赖，冷启动约 2 秒）。你只需要在 **claude.ai/code 输入框上方的云朵图标 →
+悬停环境 → 齿轮** 里改两处：
+
+**① Network access 选 `Custom`**，在 Allowed domains 里加一行：
+
+```
+docs.qq.com
+```
+
+并勾选「Also include default list of common package managers」，否则 `uv` 拉不到依赖。
+默认的 **Trusted** 级别不含 `docs.qq.com`，不改这里所有调用都会被网关挡掉。
+
+**② Environment variables** 里填：
+
+```
+TENCENT_DOCS_CLIENT_ID=...
+TENCENT_DOCS_ACCESS_TOKEN=...
+TENCENT_DOCS_OPEN_ID=...
+```
+
+> ⚠️ 云环境没有密钥存储，环境变量对所有能使用该环境的人可见，官方明确不建议放凭证。
+> 个人账号自用风险可控，但这个 token 能读写你整个腾讯文档空间，心里要有数。
+> 本机命令行那条路没有这个问题。
+
+改完开一个**新**会话（运行中的会话不会重新读配置）。如果 `/mcp` 里看不到 tencent-docs，
+多半是项目级 MCP server 还没被批准，在 `/mcp` 面板里确认一下。
+
 ## 提供的工具
 
 | 工具 | 作用 |
