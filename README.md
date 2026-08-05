@@ -38,3 +38,8 @@ python3 -m http.server 8000
 
 - **GitHub Pages**：仓库 Settings → Pages → 选择分支根目录即可
 - **Vercel / Netlify**：导入仓库，无需任何构建命令，输出目录为仓库根目录
+
+## 附带工具
+
+`tools/tencent-docs-mcp/` 是一个独立的 MCP Server，和展示页无关：把本地生成的
+docx/xlsx/pptx 直接导入腾讯文档并返回可打开的链接，用法见该目录下的 README。
