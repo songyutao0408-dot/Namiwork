@@ -1,0 +1,19 @@
+{
+  "name": "作业伙伴",
+  "short_name": "作业伙伴",
+  "description": "作业打卡 × 电子宠物养成",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4f7f4",
+  "theme_color": "#7ec8a9",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
