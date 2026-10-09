@@ -1,0 +1,794 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>中华五千年</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+<style>
+/* Layout: a small cinema. Deep indigo surround, one 16:9 sheet of pale celadon paper drawn in blue-black ink
+   (blue-and-white porcelain), vermilion only for seals and fire. Subtitles sit on the sheet; scrubber below. */
+:root{
+  --night:#10152a; --night-2:#1b2342; --night-3:#2a3460;
+  --paper:#EDF1EA; --ink:#1C2747; --ink-soft:#64708F; --cobalt:#2F55A8; --mist:#B9C4D9;
+  --seal:#D2412B; --gold:#E6A92E; --moon:#F2D98C;
+  --f-brush:"Ma Shan Zheng","STKaiti","KaiTi","Kaiti SC",serif;
+  --f-fun:"ZCOOL KuaiLe","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --f-ui:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+  color-scheme:dark;
+}
+html,body{background:var(--night);color:var(--paper)}
+[hidden]{display:none!important}
+body{font-family:var(--f-ui);padding-inline:16px;padding-block:18px 28px}
+.wrap{width:min(100%,max(560px,calc((100svh - 210px)*1.7778)));margin-inline:auto;display:flex;flex-direction:column;gap:12px}
+.top{display:flex;align-items:baseline;justify-content:space-between;gap:8px 16px;flex-wrap:wrap}
+.top h1{margin:0;font-family:var(--f-brush);font-weight:400;font-size:clamp(26px,3.4vw,36px);letter-spacing:.06em;color:var(--paper)}
+.top p{margin:0;font-size:13px;color:var(--mist);letter-spacing:.04em}
+.screen{position:relative;container-type:inline-size}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-width:100%;background:var(--paper);border-radius:6px;overflow:hidden;
+  box-shadow:0 0 0 1px rgba(255,255,255,.06),0 18px 50px rgba(0,0,0,.45);container-type:inline-size}
+.stage svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.ink{fill:none;stroke:var(--ink);stroke-linecap:round;stroke-linejoin:round}
+.blush{stroke:none;opacity:.32}
+.sil{fill:var(--paper);stroke:none}
+.fun{font-family:var(--f-fun);fill:var(--ink)}
+.brush{font-family:var(--f-brush);fill:var(--ink)}
+.popper{transform-box:fill-box;transform-origin:center}
+#year{font-family:var(--f-fun);fill:var(--ink-soft);letter-spacing:.04em;font-variant-numeric:tabular-nums}
+.sub{position:absolute;left:5%;right:5%;bottom:2.6%;margin:0;text-align:center;font-family:var(--f-fun);color:var(--ink);
+  font-size:2.5cqw;line-height:1.35;text-wrap:balance;min-height:2.7em;display:flex;align-items:flex-end;justify-content:center;pointer-events:none}
+@container (max-width:620px){
+  .sub{position:static;color:var(--paper);font-size:15px;min-height:3.1em;padding-top:10px;align-items:flex-start}
+}
+.start{position:absolute;left:50%;top:67%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:1.2cqw;
+  background:none;border:0;padding:8px;cursor:pointer;color:var(--ink);font:inherit}
+.start .seal{width:clamp(58px,10cqw,124px);aspect-ratio:1;background:var(--seal);color:var(--paper);font-family:var(--f-brush);
+  font-size:clamp(24px,4.3cqw,54px);display:grid;place-items:center;border-radius:10%;transform:rotate(-5deg);
+  box-shadow:0 6px 0 rgba(28,39,71,.18);transition:transform .2s ease}
+.start:hover .seal,.start:focus-visible .seal{transform:rotate(0) scale(1.06)}
+.start small{font-family:var(--f-fun);font-size:clamp(12px,1.7cqw,19px);color:var(--ink-soft);background:var(--paper);padding:2px 10px;border-radius:99px}
+.start:focus-visible{outline:none}
+.start:focus-visible small{outline:2px solid var(--cobalt);outline-offset:2px}
+.track{position:relative;display:flex;gap:3px;padding-block:6px 2px;cursor:pointer;touch-action:none;container-type:inline-size;user-select:none}
+.seg{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:6px;background:none;border:0;padding:0;cursor:pointer;color:var(--mist);font:inherit}
+.seg .bar{height:6px;border-radius:3px;background:var(--night-3);overflow:hidden;width:100%}
+.seg .fill{display:block;height:100%;width:0;background:var(--paper)}
+.seg.on .fill{background:var(--seal)}
+.seg .lb{font-family:var(--f-fun);font-size:12px;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:clip;text-align:center;opacity:.75}
+.seg.on .lb{color:var(--paper);opacity:1}
+@container (max-width:760px){.seg .lb{display:none}}
+.seg:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:3px}
+.bar-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.btn{width:40px;height:40px;border-radius:50%;border:1px solid var(--night-3);background:var(--night-2);color:var(--paper);display:grid;place-items:center;cursor:pointer;padding:0}
+.btn:hover{background:var(--night-3)}
+.btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.btn svg{width:18px;height:18px;fill:currentColor}
+.btn.main{width:46px;height:46px;background:var(--seal);border-color:var(--seal)}
+.btn.main:hover{background:#e04c35}
+.chap{flex:1 1 140px;min-width:0;display:flex;flex-direction:column;gap:2px}
+.chap b{font-family:var(--f-fun);font-weight:400;font-size:18px;color:var(--paper);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chap span{font-size:12px;color:var(--mist);font-variant-numeric:tabular-nums}
+.hint{font-size:12px;color:var(--ink-soft);margin:0;color:var(--mist);opacity:.8}
+@media (prefers-reduced-motion:reduce){.start .seal{transition:none}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <h1>中华五千年</h1>
+    <p>线稿动画 · 21 个章节 · <span id="totalTxt">约 2 分钟</span></p>
+  </header>
+
+  <div class="screen" id="screen">
+    <div class="stage">
+      <svg id="svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid meet" role="img" aria-label="中华五千年线稿动画">
+        <defs id="defs">
+          <filter id="b0" x="0" y="0" width="1600" height="900" filterUnits="userSpaceOnUse"><feTurbulence type="fractalNoise" baseFrequency="0.022" numOctaves="2" seed="2"/><feDisplacementMap in="SourceGraphic" scale="3.6" xChannelSelector="R" yChannelSelector="G"/></filter>
+          <filter id="b1" x="0" y="0" width="1600" height="900" filterUnits="userSpaceOnUse"><feTurbulence type="fractalNoise" baseFrequency="0.022" numOctaves="2" seed="9"/><feDisplacementMap in="SourceGraphic" scale="3.6" xChannelSelector="R" yChannelSelector="G"/></filter>
+          <filter id="b2" x="0" y="0" width="1600" height="900" filterUnits="userSpaceOnUse"><feTurbulence type="fractalNoise" baseFrequency="0.022" numOctaves="2" seed="17"/><feDisplacementMap in="SourceGraphic" scale="3.6" xChannelSelector="R" yChannelSelector="G"/></filter>
+        </defs>
+        <g id="art" filter="url(#b0)"></g>
+        <text id="year" x="86" y="88" font-size="32"></text>
+      </svg>
+      <button class="start" id="start" type="button" aria-label="开始播放">
+        <span class="seal">开播</span>
+        <small id="startHint">建议打开声音</small>
+      </button>
+    </div>
+    <p class="sub" id="cap" aria-live="polite"></p>
+  </div>
+
+  <div class="track" id="track" aria-label="章节时间轴"></div>
+
+  <div class="bar-row">
+    <button class="btn main" id="playBtn" type="button" aria-label="播放"><svg viewBox="0 0 24 24" id="playIco"><path d="M7 4.5v15l13-7.5z"/></svg></button>
+    <button class="btn" id="prevBtn" type="button" aria-label="上一章"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
+    <button class="btn" id="nextBtn" type="button" aria-label="下一章"><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></button>
+    <div class="chap"><b id="chapName">开场</b><span id="timeTxt">0:00 / 0:00</span></div>
+    <button class="btn" id="muteBtn" type="button" aria-label="静音"><svg viewBox="0 0 24 24" id="muteIco"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+  </div>
+  <p class="hint">空格键播放 / 暂停，← → 切换章节，M 静音。点时间轴任意位置可跳转。</p>
+</div>
+
+<script>
+(()=>{
+const NS='http://www.w3.org/2000/svg';
+const $=id=>document.getElementById(id);
+const art=$('art'),DEFS=$('defs'),yearEl=$('year'),capEl=$('cap');
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function mk(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+let _s=7;const rnd=()=>{_s=(_s*16807)%2147483647;return(_s-1)/2147483646;};
+const J=a=>(rnd()*2-1)*a;
+const f1=n=>Math.round(n*10)/10;
+const clamp=(v,a=0,b=1)=>v<a?a:v>b?b:v;
+const easeOut=p=>1-Math.pow(1-p,3);
+const easeIO=p=>p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;
+const backOut=p=>{const c1=1.9,c3=c1+1;return 1+c3*Math.pow(p-1,3)+c1*Math.pow(p-1,2);};
+let CID=0;
+
+/* ---------- sketchy geometry ---------- */
+function cr(pts,closed){
+  const p=closed?[pts[pts.length-1],...pts,pts[0],pts[1]]:[pts[0],...pts,pts[pts.length-1]];
+  let d=`M${f1(p[1][0])},${f1(p[1][1])}`;
+  for(let i=1;i<p.length-2;i++){const[a,b,c,e]=[p[i-1],p[i],p[i+1],p[i+2]];
+    d+=`C${f1(b[0]+(c[0]-a[0])/6)},${f1(b[1]+(c[1]-a[1])/6)} ${f1(c[0]-(e[0]-b[0])/6)},${f1(c[1]-(e[1]-b[1])/6)} ${f1(c[0])},${f1(c[1])}`;}
+  return d;
+}
+function wline(x1,y1,x2,y2){const mx=(x1+x2)/2,my=(y1+y2)/2,L=Math.hypot(x2-x1,y2-y1)||1,o=J(Math.min(5,L*.03));
+  return `M${f1(x1+J(.8))},${f1(y1+J(.8))}Q${f1(mx-(y2-y1)/L*o)},${f1(my+(x2-x1)/L*o)} ${f1(x2+J(.8))},${f1(y2+J(.8))}`;}
+function wpoly(pts,closed){const P=closed?[...pts,pts[0]]:pts;let d=`M${f1(P[0][0])},${f1(P[0][1])}`;
+  for(let i=1;i<P.length;i++){const[x1,y1]=P[i-1],[x2,y2]=P[i];const L=Math.hypot(x2-x1,y2-y1)||1,o=J(Math.min(3.5,L*.025));
+    d+=`Q${f1((x1+x2)/2-(y2-y1)/L*o)},${f1((y1+y2)/2+(x2-x1)/L*o)} ${f1(x2+J(.6))},${f1(y2+J(.6))}`;}
+  return closed?d+'Z':d;}
+function circ(cx,cy,rx,ry,over){const n=12,a0=rnd()*6.283,pts=[];for(let i=0;i<=n;i++){const a=a0+i/n*(6.283+over),k=1+J(.02);pts.push([cx+Math.cos(a)*rx*k,cy+Math.sin(a)*ry*k]);}return cr(pts,false);}
+const CIRC=(cx,cy,r)=>`M${cx-r},${cy}a${r},${r} 0 1,0 ${2*r},0a${r},${r} 0 1,0 ${-2*r},0Z`;
+function star(cx,cy,r,rot){const p=[];for(let i=0;i<10;i++){const a=rot+i*Math.PI/5,rr=i%2?r*.382:r;p.push(f1(cx+Math.cos(a)*rr)+','+f1(cy+Math.sin(a)*rr));}return 'M'+p.join('L')+'Z';}
+function wave(x0,x1,y,amp,per,ph=0,step=20){const p=[];for(let x=x0;x<=x1+.1;x+=step)p.push([x,y+Math.sin(x/per+ph)*amp]);return p;}
+const SIL='M-18,-104 Q-28,-52 -46,-4 Q0,4 46,-4 Q28,-52 18,-104Z'+CIRC(0,-140,37);
+
+/* ---------- scene builder ---------- */
+class D{
+  constructor(sc,p,sw=3.6,color=null){this.sc=sc;this.p=p;this.sw=sw;this.color=color;this.gap=null;}
+  at(t){this.sc.cur=t;return this;}
+  _time(o,len){const t=o.t??this.sc.cur;const dur=o.dur??Math.min(1.1,Math.max(.2,len/1100));
+    this.sc.cur=t+(o.gap??this.gap??Math.min(.14,dur*.5));return[t,dur];}
+  path(d,o={}){
+    const e=mk('path',{d,class:o.cls||'ink'},this.p);
+    e.style.strokeWidth=o.w??this.sw;const c=o.color??this.color;if(c)e.style.stroke=c;
+    if(o.fill){e.style.fill=o.fill;e.style.fillOpacity=0;}else if(o.paper){e.style.fill='var(--paper)';e.style.fillOpacity=0;}
+    const len=e.getTotalLength()+2;const[t,dur]=this._time(o,len);
+    e.style.strokeDasharray=`${len} ${len+20}`;e.style.strokeDashoffset=len;
+    this.sc.items.push({k:'draw',e,len,t,dur,fill:!!o.fill,paper:!!o.paper&&!o.fill,o:-1});return e;}
+  line(x1,y1,x2,y2,o){return this.path(wline(x1,y1,x2,y2),o);}
+  poly(pts,o={}){return this.path(wpoly(pts,o.closed),o);}
+  curve(pts,o={}){return this.path(cr(pts.map(p=>[p[0]+J(1),p[1]+J(1)]),o.closed),o);}
+  circle(cx,cy,r,o={}){return this.path(circ(cx,cy,r,o.ry??r,o.over??.3),o);}
+  text(str,x,y,o={}){
+    const size=o.size||32;const e=mk('text',{x,y,'font-size':size,'text-anchor':o.anchor||'middle',class:o.cls||'fun'},this.p);
+    if(o.color)e.style.fill=o.color;
+    const chars=[...str],mode=o.mode||'type',t=o.t??this.sc.cur;
+    const dur=o.dur??(mode==='type'?Math.max(.2,chars.length/14):mode==='wipe'?.8:.35);
+    this.sc.cur=t+(o.gap??this.gap??.1);
+    const it={k:mode,e,t,dur,chars,n:-1};
+    if(mode==='wipe'){const id='w'+(++CID),w=o.ww||chars.length*size*1.04,a=o.anchor||'middle',x0=a==='middle'?x-w/2:a==='end'?x-w:x;
+      const cp=mk('clipPath',{id},DEFS);it.r=mk('rect',{x:x0-14,y:y-size*1.15,width:0,height:size*1.6},cp);it.w=w+28;e.setAttribute('clip-path',`url(#${id})`);}
+    if(mode==='pop')e.classList.add('popper');
+    e.textContent=mode==='type'?'':str;
+    this.sc.items.push(it);return e;}
+  g(o={}){const e=mk('g',{},this.p);if(o.tf)e.setAttribute('transform',o.tf);
+    const d=new D(this.sc,e,o.sw??this.sw,o.color??this.color);d.gap=this.gap;
+    if(o.move)this.sc.items.push({k:'move',e,fn:o.move,base:o.tf||''});return d;}
+  popg(t,o={}){const d=this.g(o);d.p.classList.add('popper');this.sc.items.push({k:'pop',e:d.p,t,dur:o.dur||.38});return d;}
+  sfx(type,t){this.sc.sfx.push({t:t??this.sc.cur,type});}
+  title(name,era){const n=[...name].length,size=Math.min(124,440/n),y=112+size*.92;
+    this.text(name,84,y,{size,cls:'brush',mode:'wipe',t:.15,dur:.75,anchor:'start'});
+    this.text(era,88,y+46,{size:27,mode:'fade',t:.65,color:'var(--seal)',anchor:'start'});
+    this.sc.cur=.5;}
+  bubble(x,y,str,o={}){
+    const size=o.size||32,n=[...str].length,w=o.w||n*size*1.02+46,h=size+32,x0=x-w/2,y0=y-h/2,r=18;
+    const[tx,ty]=o.tail||[x-w*.15,y0+h+34];const below=ty>y;
+    const bx=Math.max(x0+r+18,Math.min(x0+w-r-18,tx));
+    let p=`M${x0+r},${y0}`;
+    if(!below)p+=`L${bx-14},${y0}L${tx},${ty}L${bx+14},${y0}`;
+    p+=`L${x0+w-r},${y0}Q${x0+w},${y0} ${x0+w},${y0+r}L${x0+w},${y0+h-r}Q${x0+w},${y0+h} ${x0+w-r},${y0+h}`;
+    if(below)p+=`L${bx+14},${y0+h}L${tx},${ty}L${bx-14},${y0+h}`;
+    p+=`L${x0+r},${y0+h}Q${x0},${y0+h} ${x0},${y0+h-r}L${x0},${y0+r}Q${x0},${y0} ${x0+r},${y0}Z`;
+    const t=o.t??this.sc.cur,keep=this.sc.cur;
+    const g=this.popg(t,{dur:.32});
+    g.path(p,{t,dur:.3,paper:true,w:3});
+    g.text(str,x,y+size*.36,{t:t+.18,size,cls:o.font==='brush'?'brush':'fun',mode:'type',dur:o.tdur});
+    if(o.font==='brush'&&o.color)g.p.lastChild.style.fill=o.color;
+    this.sfx('pop',t);this.sc.cur=Math.max(keep,t+.3);return g;}
+  seal(x,y,sz,ch,o={}){const t=o.t??this.sc.cur;const outer=this.g({tf:`rotate(${o.rot??-6},${x},${y})`});
+    const g=outer.popg(t,{dur:.4});const r=mk('rect',{x:x-sz/2,y:y-sz/2,width:sz,height:sz,rx:sz*.1},g.p);r.style.fill='var(--seal)';
+    const tx=mk('text',{x,y:y+sz*.3,'font-size':sz*.74,'text-anchor':'middle',class:'brush'},g.p);tx.style.fill='var(--paper)';tx.textContent=ch;
+    this.sfx('stamp',t);return g;}
+  tag(x,y,n,t){const g=this.popg(t,{dur:.35});const c=mk('path',{d:CIRC(x,y,20)},g.p);c.style.fill='var(--seal)';
+    const tx=mk('text',{x,y:y+9,'font-size':26,'text-anchor':'middle',class:'fun'},g.p);tx.style.fill='var(--paper)';tx.textContent=n;this.sfx('pop',t);}
+  person(x,y,s=1,o={}){
+    if(o.t!=null)this.sc.cur=o.t;
+    const t0=this.sc.cur;
+    const d=this.g({tf:o.tf||`translate(${x},${y}) scale(${s})`,move:o.move,sw:(o.w||3.6)/(o.sx||s),color:o.color});
+    d.gap=.065;
+    if(!o.plain){const e=mk('path',{d:SIL,class:'sil'},d.p);this.sc.items.push({k:'show',e,t:t0});}
+    d.circle(0,-140,36,{over:.15});
+    if(!o.plain)face(d,o.mood||'normal');
+    hat(d,o.hat);
+    d.path('M-18,-104 Q-28,-52 -46,-4 Q0,4 46,-4 Q28,-52 18,-104');
+    if(!o.plain){d.path('M-16,-104 L10,-66');d.path('M16,-104 L-3,-88');d.path('M-30,-50 Q0,-44 30,-50');}
+    (o.hands||[[-40,-46],[40,-46]]).forEach((h,i)=>{const sx=i?20:-20,sy=-98,mx=(sx+h[0])/2+(i?12:-12),my=(sy+h[1])/2+6;
+      d.curve([[sx,sy],[mx,my],h]);d.circle(h[0],h[1],6,{over:.1});});
+    if(o.beard)d.path(o.beard===2?'M-12,-112 Q-12,-70 0,-58 Q12,-70 12,-112':'M-10,-112 Q-6,-94 0,-90 Q6,-94 10,-112');
+    d.gap=null;return d;}
+}
+function face(d,m){
+  const E={normal:['M-13,-147 L-13,-139','M13,-147 L13,-139'],happy:['M-19,-140 Q-14,-148 -9,-140','M9,-140 Q14,-148 19,-140'],
+    tipsy:['M-20,-142 Q-17,-147 -14,-142 Q-11,-137 -8,-142','M8,-142 Q11,-147 14,-142 Q17,-137 20,-142'],
+    smug:['M-19,-142 L-7,-142','M7,-142 L19,-142'],sad:['M-18,-147 L-8,-142','M18,-147 L8,-142']};
+  E.laugh=E.happy;E.sweat=E.normal;
+  if(m==='surprised'){d.circle(-13,-143,4,{over:.05});d.circle(13,-143,4,{over:.05});}else E[m].forEach(p=>d.path(p));
+  const M={normal:'M-7,-122 Q0,-117 7,-122',happy:'M-11,-125 Q0,-112 11,-125',laugh:'M-13,-127 Q0,-104 13,-127Z',
+    tipsy:'M-9,-121 Q-4,-116 1,-121 Q6,-126 11,-121',sweat:'M-8,-120 Q0,-125 8,-120',smug:'M-8,-121 Q3,-116 12,-127',sad:'M-8,-118 Q0,-126 8,-118'};
+  if(m==='surprised')d.circle(0,-121,6,{over:.05});else d.path(M[m]);
+  d.path(CIRC(-24,-127,6),{cls:'blush',fill:'var(--seal)'});d.path(CIRC(24,-127,6),{cls:'blush',fill:'var(--seal)'});
+  if(m==='sweat')d.path('M31,-172 Q24,-159 31,-153 Q38,-159 31,-172',{color:'var(--cobalt)'});
+}
+function hat(d,h){
+  const w=d.sw;
+  switch(h){
+    case 'bun':d.circle(0,-186,11);d.line(-19,-189,19,-183);break;
+    case 'crown':d.path('M-52,-188 L52,-194 L52,-184 L-52,-178Z');d.path('M-24,-176 L-22,-188');d.path('M24,-178 L22,-190');
+      [-46,-34,34,46].forEach(x=>d.line(x,-184,x,-158,{w:w*.7}));break;
+    case 'scholar':d.path('M-35,-158 Q-38,-198 0,-200 Q38,-198 35,-158');d.path('M-37,-158 L37,-158');break;
+    case 'helmet':d.path('M-38,-150 Q-40,-196 0,-198 Q40,-196 38,-150');d.path('M-44,-152 L44,-152');d.line(0,-198,0,-214);
+      d.path('M0,-214 Q-12,-226 -4,-240 Q8,-228 0,-214Z',{fill:'var(--seal)'});break;
+    case 'mongol':d.path('M-38,-160 Q-44,-202 0,-206 Q44,-202 38,-160');d.path('M-46,-170 Q0,-160 46,-170 L44,-156 Q0,-146 -44,-156Z');d.circle(0,-210,6);break;
+    case 'qing':d.path('M-48,-160 Q-30,-198 0,-206 Q30,-198 48,-160 Q0,-150 -48,-160Z');d.path(CIRC(0,-210,6),{fill:'var(--seal)'});
+      d.path('M-12,-202 Q-26,-184 -36,-166',{color:'var(--seal)'});d.path('M12,-202 Q26,-184 36,-166',{color:'var(--seal)'});
+      d.path('M30,-150 Q54,-118 42,-82 Q32,-52 48,-22',{w:w*1.8});break;
+    case 'shaved':d.path('M8,-176 Q34,-170 36,-140');break;
+    case 'lady':d.circle(-30,-174,14);d.circle(30,-174,14);d.line(-46,-190,-18,-166);d.path(CIRC(-46,-191,4),{fill:'var(--seal)'});break;
+    case 'modern':d.path('M-36,-148 Q-36,-182 0,-180 Q34,-182 36,-150');d.path('M-8,-178 Q4,-160 30,-162');break;
+  }
+}
+function cloud(d,x,y,s=1,o={}){d.curve([[x-70*s,y],[x-58*s,y-22*s],[x-30*s,y-26*s],[x-18*s,y-48*s],[x+14*s,y-50*s],[x+30*s,y-30*s],[x+56*s,y-30*s],[x+70*s,y-8*s],[x+52*s,y+2*s]],o);d.curve([[x-40*s,y+10*s],[x+30*s,y+12*s]],o);}
+function burst(d,cx,cy,t,r1=22,r2=72){for(let k=0;k<12;k++){const a=k*Math.PI/6;d.line(cx+Math.cos(a)*r1,cy+Math.sin(a)*r1,cx+Math.cos(a)*r2,cy+Math.sin(a)*r2,{t:t+k*.015,dur:.22,color:k%2?'var(--gold)':'var(--seal)'});}d.sfx('spark',t);}
+function fire(d,cx,by,s=1){const g=d.g({move:t=>`translate(${cx},${by}) scale(1,${1+Math.sin(t*15)*.07+Math.sin(t*23)*.04}) translate(${-cx},${-by})`});
+  g.curve([[cx-35*s,by],[cx-42*s,by-28*s],[cx-20*s,by-52*s],[cx-18*s,by-86*s],[cx+6*s,by-50*s],[cx+20*s,by-72*s],[cx+34*s,by-26*s],[cx+28*s,by]],{fill:'var(--seal)'});return g;}
+
+/* ---------- scenes ---------- */
+const SC=[];const S=def=>SC.push(def);
+
+S({label:'开场',dur:5.6,year:null,caption:'五千年的历史，两分钟速通。系好安全带，出发！',build(d){
+  d.at(.1);
+  d.curve([[40,660],[180,566],[300,622],[430,528],[580,632]],{color:'var(--ink-soft)'});
+  d.curve([[1000,640],[1140,546],[1260,604],[1400,512],[1560,622]],{color:'var(--ink-soft)'});
+  d.curve([[0,690],[400,676],[800,692],[1200,672],[1600,688]],{w:2.8});
+  d.circle(1300,210,56,{fill:'var(--seal)'});
+  cloud(d,210,230,1,{color:'var(--ink-soft)'});cloud(d,1060,160,.8,{color:'var(--ink-soft)'});
+  d.text('中华五千年',800,398,{size:176,cls:'brush',mode:'wipe',t:.7,dur:1.5});
+  d.text('线稿动画 · 极速版',800,476,{size:38,mode:'fade',t:2.1,color:'var(--ink-soft)'});
+  d.person(1190,690,.9,{t:2.3,hat:'bun',mood:'happy',hands:[[-40,-46],[54,-176]]});
+  d.bubble(1340,470,'出发！',{t:3.3,tail:[1232,548]});
+}});
+
+S({label:'传说',dur:6.4,year:-3000,approx:true,caption:'传说时代：炎帝和黄帝两大部落联手，后人便自称“炎黄子孙”。',build(d){
+  d.title('传说时代','距今约五千年');
+  d.line(560,662,1540,662,{w:2.8});
+  cloud(d,1420,200,.9,{color:'var(--ink-soft)'});
+  d.at(.6);d.line(666,668,774,650);d.line(670,650,770,670);
+  fire(d,720,660,1);
+  d.person(900,662,1.2,{t:1,hat:'bun',beard:1,mood:'happy',hands:[[-42,-48],[100,-82]]});
+  d.person(1140,662,1.2,{t:1.45,hat:'bun',beard:1,mood:'happy',hands:[[-100,-82],[42,-48]]});
+  d.text('炎帝',900,716,{size:30,t:2.4,mode:'fade'});d.text('黄帝',1140,716,{size:30,t:2.5,mode:'fade'});
+  d.bubble(800,352,'合作愉快！',{t:2.8,tail:[884,440]});
+  d.bubble(1290,352,'以后就是一家人',{t:3.7,tail:[1164,440]});
+}});
+
+S({label:'夏',dur:6.6,year:-2070,approx:true,caption:'大禹治水，三过家门而不入。夏朝建立，王位从此“父传子”。',build(d){
+  d.title('夏','约前2070年—前1600年');
+  d.at(.5);
+  for(let i=0;i<4;i++)d.curve(wave(540,860,450+i*52,12,28,i*1.3,16),{color:'var(--cobalt)',gap:.08});
+  d.line(860,652,1540,652,{w:2.8});
+  d.curve(wave(560,1540,700,5,40,0,40),{w:2.8,color:'var(--cobalt)'});
+  d.curve(wave(560,1540,736,5,40,1,40),{w:2.8,color:'var(--cobalt)'});
+  d.at(1);
+  d.poly([[1290,478],[1290,652],[1490,652],[1490,478]]);
+  d.poly([[1262,484],[1390,396],[1518,484]]);
+  d.poly([[1340,652],[1340,562],[1390,562],[1390,652]]);
+  d.poly([[1418,518],[1470,518],[1470,574],[1418,574]],{closed:true});
+  d.circle(1444,553,13);
+  const yu=d.person(1000,652,1.1,{t:1.4,hat:'bun',mood:'sweat',hands:[[-20,-74],[30,-33]],move:t=>`translate(0,${f1(Math.sin(t*7)*3)})`});
+  yu.line(-40,-90,72,2,{w:4.4});yu.poly([[58,-4],[88,-4],[92,26],[54,26]],{closed:true});
+  d.bubble(1300,330,'回家吃饭啦！',{t:2.7,tail:[1432,508]});
+  d.bubble(900,340,'忙着呢，下次一定！',{t:3.8,tail:[986,452]});
+}});
+
+S({label:'商',dur:6.6,year:-1600,approx:true,caption:'商朝人遇事先问老天：烤龟甲、看裂纹、再刻上字，这就是甲骨文。',build(d){
+  d.title('商','约前1600年—前1046年');
+  d.at(.5);
+  d.circle(860,450,150,{ry:190,dur:.9});
+  d.line(860,264,860,636,{w:2.6});d.curve([[722,380],[860,372],[998,380]],{w:2.6});d.curve([[714,520],[860,528],[1006,520]],{w:2.6});
+  d.at(1.4);
+  fire(d,860,704,.9);
+  d.poly([[790,300],[790,350],[812,336]],{w:2.6,t:2});d.poly([[935,436],[935,486],[912,474]],{w:2.6});d.poly([[796,560],[796,602],[820,590]],{w:2.6});
+  d.at(2.5);
+  const c={color:'var(--cobalt)',w:3.4};
+  d.line(894,300,966,300,c);[[905,314,330],[930,314,334],[955,314,330],[917,342,358],[943,342,358]].forEach(([x,a,b])=>d.line(x,a,x,b,c));
+  d.circle(790,452,18,c);d.line(783,452,797,452,c);
+  d.text('甲骨文',700,664,{size:26,mode:'fade',t:3.2,color:'var(--ink-soft)'});
+  d.person(1180,660,1.15,{t:1.1,hat:'bun',mood:'surprised',hands:[[-76,-100],[40,-48]]});
+  d.at(2.2);
+  d.path('M1360,560 Q1365,622 1400,630 L1460,630 Q1495,622 1500,560');d.line(1348,560,1512,560);
+  d.poly([[1376,560],[1376,524],[1400,524],[1400,560]]);d.poly([[1460,560],[1460,524],[1484,524],[1484,560]]);
+  d.line(1386,628,1380,672);d.line(1474,628,1480,672);d.line(1430,632,1430,674);
+  d.path('M1380,588 q10,-10 20,0 t20,0 t20,0 t20,0 t20,0 t20,0',{w:2.6});
+  d.text('青铜鼎',1430,714,{size:24,mode:'fade',color:'var(--ink-soft)'});
+  d.bubble(1240,330,'老天，明天下雨吗？',{t:3.1,tail:[1190,448]});
+}});
+
+function tower(d,x){d.poly([[x-46,660],[x-32,520],[x+32,520],[x+46,660]]);
+  d.poly([[x-38,520],[x-38,500],[x-20,500],[x-20,520],[x-2,520],[x-2,500],[x+16,500],[x+16,520],[x+34,520],[x+34,500]],{w:3});
+  fire(d,x,500,.7);
+  const s=d.g({move:t=>`translate(${f1(Math.sin(t*1.3)*8)},${f1(-t*7)})`});
+  s.curve([[x,456],[x-22,420],[x+12,386],[x-14,350],[x+16,312]],{color:'var(--ink-soft)'});
+  s.curve([[x+18,446],[x+40,410],[x+22,372]],{color:'var(--ink-soft)'});}
+S({label:'西周',dur:6.6,year:-1046,caption:'西周讲究礼乐。据说周幽王为博美人一笑，点烽火戏诸侯，结果玩脱了……',build(d){
+  d.title('西周','前1046年—前771年');
+  d.line(540,660,1560,660,{w:2.8,t:.4});
+  d.at(.6);tower(d,610);
+  d.person(850,660,1.1,{t:1.1,hat:'crown',mood:'laugh',hands:[[-44,-48],[66,-118]]});
+  d.person(975,660,1,{t:1.5,hat:'lady',mood:'laugh',hands:[[-12,-120],[40,-48]]});
+  d.at(1.9);tower(d,1480);
+  d.person(1190,660,1,{t:2.3,hat:'helmet',mood:'surprised',hands:[[-40,-48],[44,-48]]});
+  d.person(1325,660,1,{t:2.55,hat:'helmet',mood:'sweat'});
+  d.bubble(760,350,'哈哈，又骗到了！',{t:2.7,tail:[846,466]});
+  d.bubble(1170,392,'敌人呢？',{t:3.6,tail:[1192,470]});
+  d.bubble(1360,300,'又白跑一趟……',{t:4.3,tail:[1330,470]});
+}});
+
+S({label:'春秋战国',dur:6.8,year:-770,caption:'春秋战国：天下大乱，思想大爆炸！诸子百家，各讲各的理。',build(d){
+  d.title('春秋战国','前770年—前221年');
+  d.line(560,662,1540,662,{w:2.8,t:.4});
+  const P=[[640,'scholar',1,'孔子','仁',400,'happy'],[860,'bun',2,'老子','道',330,'smug'],[1080,'bun',0,'墨子','兼爱',400,'happy'],[1300,'scholar',0,'韩非子','法',330,'normal']];
+  P.forEach(([x,h,beard,name,,,mood],i)=>{d.person(x,662,1,{t:.55+i*.32,hat:h,beard,mood,hands:i%2?[[-40,-46],[58,-150]]:[[-58,-150],[40,-46]]});
+    d.text(name,x,714,{size:28,mode:'fade',t:1.9+i*.1});});
+  for(let i=0;i<6;i++)d.poly([[1400+i*20,440],[1416+i*20,440],[1416+i*20,630],[1400+i*20,630]],{closed:true,w:2.6,t:1.6+i*.06});
+  d.line(1392,480,1530,480,{w:2.6,color:'var(--seal)'});d.line(1392,592,1530,592,{w:2.6,color:'var(--seal)'});
+  P.forEach(([x,,,,word,by],i)=>d.bubble(x+(i%2?30:-30),by,word,{t:2.4+i*.55,size:50,font:'brush',color:'var(--seal)',tail:[x,474]}));
+}});
+
+S({label:'秦',dur:6.8,year:-221,caption:'秦始皇统一六国：书同文、车同轨、统一度量衡，还把长城连成了一片。',build(d){
+  d.title('秦','前221年—前207年');
+  d.curve([[540,330],[640,250],[740,318],[860,232],[980,300],[1100,240],[1220,300],[1340,222],[1460,290],[1560,262]],{t:.3,dur:.9,color:'var(--ink-soft)'});
+  const yb=x=>440+28*Math.sin((x-560)/150);
+  let p='',up=false;for(let x=560;x<1540;x+=20){const h=up?14:0,y0=yb(x)-52-h,y1=yb(x+20)-52-h;p+=(x===560?'M':'L')+`${x},${f1(y0)}L${x+20},${f1(y1)}`;up=!up;}
+  d.path(p,{t:.6,dur:1.8});
+  const bp=[];for(let x=560;x<=1540;x+=40)bp.push([x,yb(x)]);d.curve(bp,{t:.7,dur:1.6});
+  [760,1080,1400].forEach((x,i)=>{d.poly([[x-30,yb(x)],[x-30,yb(x)-104],[x+30,yb(x)-104],[x+30,yb(x)]],{closed:true,paper:true,t:1.4+i*.35});
+    d.poly([[x-42,yb(x)-102],[x,yb(x)-134],[x+42,yb(x)-102]]);});
+  d.person(700,704,1.25,{t:1.2,hat:'crown',mood:'smug',hands:[[-40,-48],[96,-150]]});
+  d.bubble(960,560,'以后都按我的来！',{t:2.6,tail:[792,520]});
+  [[1090,'文','书同文'],[1270,'轨','车同轨'],[1450,'衡','度量衡']].forEach(([x,c,l],i)=>{const t=3.4+i*.45;
+    d.circle(x,668,50,{t,dur:.35});d.text(c,x,688,{size:56,cls:'brush',mode:'pop',t:t+.2,color:'var(--seal)'});d.text(l,x,746,{size:24,mode:'fade',t:t+.3});d.sfx('stamp',t+.2);});
+}});
+
+S({label:'汉',dur:6.6,year:-202,caption:'汉朝：张骞出使西域，凿空丝绸之路。“汉族”的“汉”，就从这儿来。',build(d){
+  d.title('汉','前202年—公元220年');
+  d.circle(1440,215,50,{t:.3,fill:'var(--gold)'});
+  d.curve([[700,540],[880,492],[1060,540]],{color:'var(--ink-soft)',t:.4});d.curve([[1130,522],[1290,480],[1460,526]],{color:'var(--ink-soft)'});
+  d.curve([[540,688],[760,670],[1000,690],[1240,668],[1560,686]],{w:2.8});
+  for(let x=570,i=0;x<1530;x+=48,i++)d.line(x,708,x+24,708,{t:.6+i*.03,dur:.12,color:'var(--seal)',w:3.4});
+  d.text('西域',600,746,{size:26,mode:'fade',t:1.2});d.text('长安',1500,746,{size:26,mode:'fade',t:1.3});
+  const out=d.g({move:t=>`translate(${f1(1210-t*86)},${f1(686-Math.abs(Math.sin(t*5))*4)})`});
+  const c=out.g({tf:'scale(-1,1)'});
+  c.at(.8);
+  c.curve([[-100,-118],[-80,-140],[-55,-178],[-30,-142],[-5,-175],[22,-142],[55,-128],[80,-150],[92,-182],[112,-190],[132,-182],[128,-168],[106,-166],[96,-140],[84,-108],[60,-96],[-70,-96],[-100,-118]],{dur:1});
+  c.line(-62,-98,-66,0);c.line(-40,-98,-34,0);c.line(40,-98,36,0);c.line(58,-100,64,0);
+  c.curve([[-100,-118],[-112,-100],[-108,-80]]);c.path(CIRC(117,-178,2.6),{fill:'var(--ink)'});
+  c.circle(-34,-128,14,{fill:'var(--seal)'});c.circle(-6,-126,12,{fill:'var(--gold)'});
+  const zq=c.person(175,0,.95,{t:1.6,hat:'scholar',beard:1,mood:'happy',hands:[[-40,-46],[52,-92]]});
+  zq.line(52,-246,52,0,{w:4.4});
+  [[-240,40,-218,46,-198],[-226,64,-206,58,-186],[-212,42,-192,48,-174]].forEach(([y,a,b,e,f])=>zq.curve([[52,y],[a,b],[e,f]],{color:'var(--seal)'}));
+  out.bubble(-210,-336,'西边有啥？去看看！',{t:3,tail:[-176,-224]});
+}});
+
+S({label:'三国',dur:6.6,year:220,caption:'三国：魏、蜀、吴三足鼎立。这段故事，后来被讲了一千八百年。',build(d){
+  d.title('三国','220年—280年');
+  d.line(540,684,1560,684,{w:2.8,t:.3});
+  const K=[[700,'曹操','魏','天下归心！','smug'],[1040,'刘备','蜀','兴复汉室！','happy'],[1380,'孙权','吴','江东我说了算！','laugh']];
+  K.forEach(([x,n,k,,mood],i)=>{const t0=.5+i*.42;
+    d.line(x+64,684,x+64,370,{t:t0,w:4.4});
+    d.path(`M${x+64},378 Q${x+110},366 ${x+156},384 Q${x+146},430 ${x+158},476 Q${x+110},462 ${x+64},474`,{paper:true});
+    d.text(k,x+109,448,{size:54,cls:'brush',mode:'pop',t:t0+.5,color:'var(--seal)'});
+    d.person(x,684,1.05,{t:t0+.15,hat:'helmet',mood,hands:[[-40,-46],[60,-90]]});
+    d.text(n,x,736,{size:28,mode:'fade',t:t0+1});});
+  K.forEach(([x,,,say],i)=>d.bubble(x-60,330,say,{t:2.5+i*.65,tail:[x-10,464]}));
+}});
+
+S({label:'晋·南北朝',dur:6.8,year:265,caption:'两晋南北朝：天下纷乱，艺术却开了花。王羲之写下“天下第一行书”《兰亭序》。',build(d){
+  d.title('两晋南北朝','265年—589年');
+  d.at(.4);
+  d.poly([[960,168],[1030,120],[1100,168]],{w:2.6});
+  d.line(888,168,1172,168,{w:5});
+  d.poly([[904,172],[1156,172],[1156,562],[904,562]],{closed:true,paper:true});
+  d.line(888,566,1172,566,{w:5});
+  const cols=['永和九年','岁在癸丑','暮春之初','会于会稽'];
+  cols.forEach((s,c)=>[...s].forEach((ch,j)=>d.text(ch,1116-c*54,236+j*86,{size:60,cls:'brush',mode:'fade',dur:.22,t:1.5+(c*4+j)*.15})));
+  const w=d.person(760,680,1.2,{t:.9,hat:'scholar',beard:2,mood:'happy',hands:[[-40,-46],[82,-142]]});
+  w.line(82,-142,118,-176,{w:4.4});w.path('M118,-176 Q128,-190 134,-196 Q124,-190 114,-182Z',{fill:'var(--ink)'});
+  d.line(560,682,1540,682,{w:2.8,t:.5});
+  const g=d.g({move:t=>`translate(0,${f1(Math.sin(t*4)*3)})`});
+  g.at(2.2);
+  g.curve([[1290,642],[1318,612],[1376,610],[1420,628],[1404,662],[1334,668]],{closed:true,paper:true});
+  g.curve([[1322,630],[1360,618],[1394,640]]);
+  g.curve([[1406,628],[1424,592],[1416,556],[1428,538],[1450,540]]);
+  g.poly([[1448,535],[1482,546],[1450,556]],{closed:true,fill:'var(--gold)'});g.path(CIRC(1436,546,2.6),{fill:'var(--ink)'});
+  g.line(1342,668,1338,690,{color:'var(--seal)'});g.line(1372,666,1376,690,{color:'var(--seal)'});
+  d.bubble(1490,440,'嘎！',{t:3.3,tail:[1452,522]});
+  d.bubble(612,400,'写完去喂鹅',{t:4.6,tail:[716,474]});
+}});
+
+S({label:'隋',dur:6.6,year:581,caption:'隋朝只存在了37年，却干成两件大事：开凿大运河，创立科举制。',build(d){
+  d.title('隋','581年—618年');
+  d.at(.3);
+  d.curve([[560,426],[800,408],[1040,438],[1280,418],[1560,436]],{w:3,color:'var(--cobalt)'});
+  d.curve([[560,506],[800,488],[1040,518],[1280,498],[1560,516]],{w:3,color:'var(--cobalt)'});
+  [[640,470],[900,462],[1180,474],[1420,466]].forEach(([x,y])=>d.path(`M${x},${y} q12,-8 24,0 t24,0`,{w:2.4,color:'var(--cobalt)'}));
+  d.text('大运河',1470,394,{size:28,mode:'fade',t:.9,color:'var(--cobalt)'});
+  const b=d.g({move:t=>`translate(${f1(600+t*104)},${f1(466+Math.sin(t*3)*3)})`});
+  b.at(.6);b.curve([[-92,-18],[-62,12],[62,12],[96,-24]],{paper:true});b.line(-92,-18,96,-24);b.line(0,-20,0,-104);
+  b.poly([[6,-98],[58,-58],[6,-30]],{closed:true});b.poly([[0,-104],[-26,-96],[0,-90]],{closed:true,fill:'var(--seal)'});
+  d.poly([[580,612],[700,612],[700,690],[580,690]],{closed:true,t:1.3});d.text('科举',640,668,{size:46,cls:'brush',mode:'pop',t:1.6,color:'var(--seal)'});
+  [[820,'sweat'],[1040,'surprised'],[1260,'happy']].forEach(([x,m],i)=>{d.person(x,708,.8,{t:1.6+i*.3,hat:'scholar',mood:m,hands:[[-34,-80],[34,-80]]});
+    d.poly([[x-68,640],[x+68,640],[x+68,708],[x-68,708]],{closed:true,paper:true});d.line(x-34,632,x+30,628,{w:2.4});});
+  d.bubble(1420,566,'这题我会！',{t:3.7,tail:[1294,588]});
+}});
+
+S({label:'唐',dur:6.8,year:618,caption:'大唐盛世，诗人扎堆。李白举杯邀明月，对影成三人，一个人也能凑一桌。',build(d){
+  d.title('唐','618年—907年');
+  d.at(.3);
+  [[600,160],[700,250],[960,140],[1080,320],[1460,140],[1530,330],[820,330]].forEach(([x,y])=>{d.line(x-9,y,x+9,y,{w:2.4,dur:.1,gap:.03});d.line(x,y-9,x,y+9,{w:2.4,dur:.1,gap:.03});});
+  d.circle(1250,250,95,{fill:'var(--moon)',dur:.8});
+  d.line(560,622,1540,622,{w:2.8});
+  const lb=d.person(880,620,1.25,{t:1,hat:'bun',mood:'tipsy',hands:[[-44,-46],[72,-196]],move:t=>`rotate(${f1(Math.sin(t*2.2)*2.5)},0,0)`});
+  lb.poly([[58,-212],[86,-212],[82,-194],[62,-194]],{closed:true,paper:true});lb.curve([[86,-214],[96,-226],[92,-238]],{color:'var(--cobalt)'});
+  d.person(0,0,1,{t:2.3,tf:'translate(880,622) scale(1.25,-0.36) skewX(32)',sx:1.25,plain:true,color:'var(--ink-soft)',hat:'bun',hands:[[-44,-46],[72,-196]]});
+  ['举杯邀明月','对影成三人'].forEach((s,c)=>[...s].forEach((ch,j)=>d.text(ch,1490-c*58,404+j*50,{size:44,cls:'brush',mode:'fade',dur:.2,t:3+(c*5+j)*.12})));
+  d.tag(1150,160,'1',4.3);d.tag(800,392,'2',4.7);d.tag(690,676,'3',5.1);
+}});
+
+S({label:'宋',dur:6.8,year:960,caption:'宋朝：经济文化开挂！活字印刷、指南针、火药，都在这时大显身手。',build(d){
+  d.title('宋','960年—1279年');
+  [['字',600,320],['活',734,320],['刷',600,454],['印',734,454]].forEach(([ch,x,y],i)=>{const t=.5+i*.28;
+    d.poly([[x,y],[x+120,y],[x+120,y+120],[x,y+120]],{closed:true,paper:true,t,dur:.3});
+    const g=d.g({tf:`translate(${x+60},${y+60}) scale(-1,1)`});g.text(ch,0,30,{size:84,cls:'brush',mode:'pop',t:t+.2});d.sfx('stamp',t+.2);});
+  d.text('（印版上的字是反着刻的）',727,624,{size:24,mode:'fade',t:1.8,color:'var(--ink-soft)'});
+  d.person(1000,680,1.05,{t:1.2,hat:'bun',mood:'happy',hands:[[-90,-120],[40,-46]]});
+  d.bubble(1040,398,'排版中，请稍候……',{t:2.3,tail:[1010,484]});
+  d.at(2.6);
+  d.circle(1320,590,78);d.circle(1320,590,62,{w:2.4});
+  for(let k=0;k<8;k++){const a=k*Math.PI/4;d.line(1320+Math.cos(a)*64,590+Math.sin(a)*64,1320+Math.cos(a)*76,590+Math.sin(a)*76,{w:2.4,dur:.1,gap:.02});}
+  const n=d.g({move:t=>`rotate(${f1(Math.sin(t*2.6)*34*Math.exp(-Math.max(0,t-2.8)*.6))},1320,590)`});
+  n.path('M1308,590 L1320,532 L1332,590Z');n.path('M1308,590 L1320,648 L1332,590Z',{fill:'var(--seal)'});
+  d.text('南',1320,712,{size:30,mode:'fade',color:'var(--seal)',t:3.2});
+  d.line(1460,470,1440,250,{t:3.5,dur:.4,color:'var(--ink-soft)',w:2.6});
+  burst(d,1440,226,3.9);
+  d.text('火药',1440,346,{size:26,mode:'fade',t:4.3,color:'var(--seal)'});
+}});
+
+S({label:'元',dur:6.4,year:1271,caption:'元朝：蒙古铁骑一路驰骋，疆域空前辽阔；元曲也唱响了大街小巷。',build(d){
+  d.title('元','1271年—1368年');
+  d.curve([[540,672],[800,664],[1060,676],[1300,664],[1560,672]],{w:2.8,t:.3});
+  [600,720,860,1000,1140,1530].forEach((x,i)=>d.poly([[x-9,672],[x-4,654],[x,672],[x+5,650],[x+10,672]],{w:2.4,t:.5+i*.05,dur:.15}));
+  d.at(.8);
+  d.poly([[1320,670],[1320,592],[1480,592],[1480,670]]);d.curve([[1308,594],[1350,540],[1400,524],[1450,540],[1492,594]]);
+  d.line(1384,521,1416,521);d.poly([[1380,670],[1380,616],[1420,616],[1420,670]]);
+  d.path('M1322,612 L1340,632 L1358,612 L1376,632 M1424,632 L1442,612 L1460,632 L1478,612',{w:2.4});
+  const h=d.g({move:t=>`translate(${f1(460+t*100)},${f1(670-Math.abs(Math.sin(t*9))*10)}) scale(1.2)`});
+  h.at(.9);
+  h.curve([[56,-88],[72,-50],[64,-6]]);h.curve([[42,-86],[50,-46],[38,-4]]);h.curve([[-52,-90],[-68,-50],[-60,-6]]);h.curve([[-38,-88],[-44,-46],[-28,-4]]);
+  h.curve([[-70,-120],[-30,-130],[30,-128],[66,-118],[74,-96],[50,-84],[-40,-84],[-74,-98]],{closed:true,paper:true});
+  h.curve([[48,-124],[70,-160],[88,-184],[112,-176],[128,-160],[122,-150],[100,-152],[86,-138],[72,-100]]);
+  h.poly([[84,-182],[86,-200],[96,-184]]);h.path(CIRC(106,-166,2.6),{fill:'var(--ink)'});
+  h.curve([[66,-160],[54,-146],[58,-130]],{color:'var(--ink-soft)'});h.curve([[-72,-114],[-100,-108],[-114,-82]]);
+  h.person(-6,-124,.58,{t:1.8,hat:'mongol',mood:'laugh',hands:[[30,-66],[60,-96]]});
+  h.circle(-130,-12,10,{color:'var(--ink-soft)',t:2.2});h.circle(-168,-22,14,{color:'var(--ink-soft)'});
+  h.bubble(60,-320,'驾！',{t:2.8,tail:[10,-238]});
+}});
+
+S({label:'明',dur:6.6,year:1368,caption:'明朝：郑和七下西洋，比哥伦布到达美洲还早了将近九十年。',build(d){
+  d.title('明','1368年—1644年');
+  for(let r=0;r<3;r++){const g=d.g({move:t=>`translate(${f1(Math.sin(t*1.4+r)*14)},0)`});g.curve(wave(500,1600,640+r*38,9,22,r,14),{t:.3+r*.12,color:'var(--cobalt)'});}
+  const s=d.g({move:t=>`translate(1040,${f1(596+Math.sin(t*2)*6)}) rotate(${f1(Math.sin(t*1.6)*1.4)})`});
+  s.at(.7);
+  s.path('M-340,-70 Q-310,50 -120,58 L140,58 Q320,50 370,-95Z',{paper:true,dur:.9});
+  s.path('M-280,-30 L320,-46',{w:2.4});
+  const deck=x=>-70+(x+340)*(-25/710);
+  [[-240,-300],[-120,-344],[0,-330],[120,-290]].forEach(([x,H])=>{const dy=deck(x);s.line(x,dy,x,H,{w:4.4});
+    const top=H+20,bot=dy-24;s.poly([[x-50,top],[x+50,top],[x+54,bot],[x-54,bot]],{closed:true,paper:true});
+    for(let k=1;k<5;k++){const y=top+(bot-top)*k/5;s.line(x-51,y,x+51,y,{w:2.4,dur:.12,gap:.03});}});
+  s.poly([[-120,-344],[-78,-334],[-120,-322]],{closed:true,fill:'var(--seal)'});
+  s.person(300,deck(300),.6,{t:2.4,hat:'scholar',mood:'happy',hands:[[-40,-46],[56,-150]]});
+  s.bubble(300,-330,'第七次出发！',{t:3.4,tail:[300,-212]});
+}});
+
+S({label:'清',dur:7,year:[[0,1644],[3.6,1840]],caption:'清朝：康乾盛世之后闭关自守。1840年，鸦片战争的炮声惊醒了“天朝”。',build(d){
+  d.title('清','1644年—1912年');
+  d.line(540,660,1560,660,{w:2.8,t:.3});
+  const em=d.person(760,660,1.15,{t:.6,hat:'qing',mood:'happy',hands:[[-36,-64],[36,-64]]});
+  em.poly([[-46,-88],[0,-76],[46,-88],[46,-48],[0,-38],[-46,-48]],{closed:true,paper:true});em.line(0,-76,0,-38);
+  d.bubble(720,330,'天朝物产丰盈，无所不有～',{t:1.4,tail:[762,412]});
+  const sh=d.g({move:t=>`translate(${f1(1330+260*(1-easeOut(clamp((t-2.6)/.9))))},606)`});
+  sh.at(2.6);
+  sh.path('M-190,-40 Q-170,24 -60,26 L120,26 Q170,20 180,-56Z',{paper:true});
+  [-120,-70,-20,30,80].forEach(x=>sh.poly([[x-8,-24],[x+8,-24],[x+8,-10],[x-8,-10]],{closed:true,w:2.4,dur:.1,gap:.03}));
+  [-90,10,100].forEach(x=>{sh.line(x,-48,x,-256,{w:4});sh.poly([[x-46,-238],[x+46,-238],[x+50,-170],[x-50,-170]],{closed:true,paper:true,gap:.05});sh.poly([[x-50,-160],[x+50,-160],[x+54,-92],[x-54,-92]],{closed:true,paper:true,gap:.05});});
+  sh.at(3.6);
+  [[-214,-22,26],[-244,-48,32],[-206,-66,22]].forEach(([x,y,r])=>sh.circle(x,y,r,{paper:true,color:'var(--ink-soft)',dur:.2,gap:.05}));
+  sh.text('轰！',-300,-108,{size:68,mode:'pop',t:3.6,color:'var(--seal)'});
+  d.sfx('boom',3.6);
+  d.bubble(890,420,'？！',{t:4.3,size:40,tail:[810,470]});
+}});
+
+S({label:'民国',dur:6.6,year:1912,caption:'1911年辛亥革命，两千多年的帝制落幕；1912年中华民国成立，辫子也剪了！',build(d){
+  d.title('民国','1912年—1949年');
+  d.line(540,660,1560,660,{w:2.8,t:.3});
+  const a=d.person(880,660,1.2,{t:.5,hat:'shaved',mood:'happy'});
+  const q=a.g({move:t=>{if(t<2.3)return'';const k=Math.min(1,(t-2.3)/.6);return `translate(${f1(k*14)},${f1(k*k*72)}) rotate(${f1(k*70)},40,-80)`;}});
+  q.path('M26,-160 Q50,-124 42,-84 Q34,-56 52,-34',{w:7,t:1.2});
+  d.person(1150,660,1.1,{t:1,hat:'modern',mood:'smug',hands:[[-150,-104],[40,-46]]});
+  d.at(1.8);d.line(944,528,1000,560,{w:4});d.line(944,562,1000,530,{w:4});d.circle(1010,566,10);d.circle(1010,524,10);
+  d.text('咔嚓！',1000,470,{size:48,mode:'pop',t:2.25,color:'var(--seal)'});d.sfx('snip',2.2);
+  d.bubble(690,380,'脑袋轻松多了！',{t:3.2,tail:[852,470]});
+  d.at(.9);
+  d.poly([[1350,372],[1490,372],[1490,540],[1350,540]],{closed:true,paper:true});
+  d.path('M1350,372 L1490,372 L1490,406 L1350,406Z',{fill:'var(--seal)',w:3});
+  d.circle(1385,366,6);d.circle(1455,366,6);
+  d.text('1912',1420,398,{size:24,mode:'fade',color:'var(--paper)'});
+  d.text('1月1日',1420,490,{size:42,mode:'pop',t:1.5});
+}});
+
+S({label:'新中国',dur:6.2,year:1949,caption:'1949年10月1日，中华人民共和国成立。',build(d){
+  d.title('新中国','1949年');
+  d.line(540,680,1560,680,{w:2.8,t:.3});
+  d.line(1000,680,1000,200,{w:4.6,t:.5,dur:.6});d.circle(1000,192,7,{fill:'var(--gold)'});
+  d.path('M1000,210 Q1075,192 1150,212 T1300,212 L1302,412 Q1227,432 1150,412 T1000,410Z',{fill:'var(--seal)',t:1,dur:.8});
+  const big=[1050,260];d.path(star(1050,260,30,-Math.PI/2),{fill:'var(--gold)',color:'var(--gold)',w:2,t:1.7,dur:.3});
+  [[1100,230],[1120,250],[1120,280],[1100,300]].forEach(([x,y],i)=>d.path(star(x,y,10,Math.atan2(big[1]-y,big[0]-x)),{fill:'var(--gold)',color:'var(--gold)',w:1.6,t:2+i*.12,dur:.15}));
+  [[640,'laugh'],[790,'happy'],[1440,'laugh']].forEach(([x,m],i)=>d.person(x,680,.95,{t:2.2+i*.3,hat:'modern',mood:m,hands:[[-50,-176],[50,-176]],move:t=>`translate(0,${f1(-Math.abs(Math.sin(t*5+i))*8)})`}));
+  burst(d,720,250,3.4);burst(d,1450,240,3.9);
+}});
+
+S({label:'改革开放',dur:6.6,year:1978,caption:'1978年，改革开放：大门一打开，工厂、高楼、集装箱一路“长”了出来。',build(d){
+  d.title('改革开放','1978年');
+  d.line(540,640,1560,640,{w:2.8,t:.3});
+  d.at(2.1);
+  [[850,300,60],[920,360,50],[980,250,70],[1060,330,55],[1125,282,60]].forEach(([x,y,w])=>{d.poly([[x,640],[x,y],[x+w,y],[x+w,640]],{gap:.08});
+    for(let yy=y+26;yy<620;yy+=34)d.line(x+12,yy,x+w-12,yy,{w:2,dur:.08,gap:.015,color:'var(--ink-soft)'});});
+  d.line(1206,640,1206,292);d.line(1152,300,1232,300);d.line(1166,300,1166,350,{w:2.4});
+  d.at(2.4);
+  [[580,590,760,640],[592,540,748,590],[612,490,728,540]].forEach(([x0,y0,x1,y1])=>{d.poly([[x0,y1],[x0,y0],[x1,y0],[x1,y1]],{closed:true,paper:true});
+    for(let x=x0+14;x<x1;x+=18)d.line(x,y0+6,x,y1-6,{w:1.8,dur:.06,gap:.01});});
+  d.at(.4);
+  d.poly([[820,640],[820,250],[1240,250],[1240,640]],{w:4.4});
+  const panel=(hx,sgn)=>{const g=d.g({move:t=>{const s=1-.86*easeIO(clamp((t-1.4)/1));return `translate(${hx},0) scale(${f1(s*100)/100},1) translate(${-hx},0)`;}});
+    const x0=hx,x1=hx+sgn*208;g.at(.6);g.poly([[x0,252],[x1,252],[x1,638],[x0,638]],{closed:true,paper:true});
+    for(let r=0;r<4;r++)for(let c=0;c<3;c++)g.circle(hx+sgn*(46+c*55),318+r*82,7,{w:2.4,dur:.08,gap:.01});
+    g.circle(x1-sgn*24,450,14);};
+  panel(822,1);panel(1238,-1);
+  d.sfx('whoosh',1.4);
+  d.person(1400,640,1,{t:2.8,hat:'modern',mood:'laugh',hands:[[-50,-176],[50,-176]]});
+  d.bubble(1430,396,'春天来了！',{t:3.6,tail:[1400,448]});
+}});
+
+S({label:'今天',dur:7,year:[[0,2003],[3.4,'今天']],caption:'2003年，神舟五号载着中国人飞上太空；今天，高铁飞驰，故事还在续写……',build(d){
+  d.title('今天','2003年 → 现在');
+  d.line(540,640,1560,640,{w:2.8,t:.2});
+  d.at(.4);
+  d.line(1330,640,1330,330,{w:3});d.line(1362,640,1362,330,{w:3});
+  d.path('M1330,620 L1362,590 L1330,560 L1362,530 L1330,500 L1362,470 L1330,440 L1362,410 L1330,380 L1362,350',{w:2});
+  const r=d.g({move:t=>t<2.2?`translate(${f1(1250+(t>1.5?Math.sin(t*70)*1.6:0))},640)`:`translate(1250,${f1(640-Math.pow(t-2.2,2)*140)})`});
+  r.at(.5);
+  r.poly([[-24,-12],[-24,-230],[24,-230],[24,-12]],{closed:true,paper:true});
+  r.curve([[-24,-230],[-14,-274],[0,-300],[14,-274],[24,-230]]);
+  r.circle(0,-186,10);
+  r.poly([[-24,-70],[-52,-10],[-24,-24]],{closed:true});r.poly([[24,-70],[52,-10],[24,-24]],{closed:true});
+  ['中','国','航','天'].forEach((ch,j)=>r.text(ch,0,-150+j*24,{size:20,mode:'fade',dur:.2,t:1.1+j*.08,color:'var(--seal)'}));
+  const fl=r.g({move:t=>`scale(1,${f1((t>2.2?1.6:1)+Math.sin(t*31)*.15)})`});
+  fl.at(1.5);fl.curve([[-18,-10],[-12,30],[0,74],[12,30],[18,-10]],{closed:true,fill:'var(--gold)'});fl.curve([[-8,-8],[0,36],[8,-8]],{closed:true,fill:'var(--seal)'});
+  d.sfx('whoosh',2.1);
+  d.at(2);[[1180,640,40],[1240,652,46],[1310,638,42],[1130,652,30],[1372,652,30]].forEach(([x,y,rr])=>d.circle(x,y,rr,{paper:true,color:'var(--ink-soft)',dur:.25,gap:.06}));
+  d.person(720,640,1,{t:1,hat:'modern',mood:'laugh',hands:[[-50,-176],[50,-176]]});
+  d.bubble(720,404,'冲呀！',{t:2.4,tail:[722,452]});
+  d.line(0,708,1600,708,{t:2.7,dur:.5,w:2.8});
+  const tr=d.g({move:t=>`translate(${f1(-720+clamp((t-3.3)/2.6)*2560)},704)`});
+  tr.at(2.6);
+  tr.path('M-620,-8 L-620,-88 L-60,-88 Q30,-86 84,-28 Q92,-8 62,-8Z',{paper:true,dur:.4});
+  tr.poly([[-600,-72],[-70,-72],[-42,-52],[-600,-52]],{closed:true,w:2.6});
+  tr.line(-620,-34,74,-34,{color:'var(--seal)',w:4});
+  [-560,-500,-180,-120].forEach(x=>tr.circle(x,-4,8,{w:2.6,dur:.1,gap:.02}));
+  [[-700,-70,-640],[-724,-42,-650],[-690,-20,-640]].forEach(([a,y,b])=>tr.line(a,y,b,y,{color:'var(--ink-soft)',w:2.6,dur:.1,gap:.02}));
+  d.sfx('whoosh',3.4);
+}});
+
+S({label:'尾声',dur:6.6,year:null,caption:'五千年，未完待续。下一页，由你来写。',build(d){
+  d.at(.1);
+  d.curve([[40,664],[200,574],[320,626],[450,532],[600,636]],{color:'var(--ink-soft)'});
+  d.curve([[980,640],[1120,552],[1250,606],[1390,516],[1560,626]],{color:'var(--ink-soft)'});
+  d.curve([[0,690],[400,678],[800,694],[1200,674],[1600,690]],{w:2.8});
+  cloud(d,1350,180,.9,{color:'var(--ink-soft)'});
+  d.text('五千年',800,392,{size:180,cls:'brush',mode:'wipe',t:.5,dur:1.2});
+  d.text('未完待续',800,484,{size:56,cls:'brush',mode:'wipe',t:1.7,dur:.9,color:'var(--seal)'});
+  d.seal(1140,268,92,'续',{t:2.7,rot:-8});
+  d.person(400,690,.9,{t:2.2,hat:'bun',mood:'happy',hands:[[-40,-46],[54,-176]]});
+  d.bubble(480,462,'下一页，你来写！',{t:3.3,tail:[432,540]});
+}});
+
+/* ---------- build ---------- */
+SC.forEach((sc,i)=>{sc.g=mk('g',{},art);sc.items=[];sc.sfx=[];sc.cur=0;_s=1000+i*7919;
+  sc.yk=Array.isArray(sc.year)?sc.year:sc.year==null?[]:[[0,sc.year]];
+  sc.build(new D(sc,sc.g));sc.g.style.display='none';});
+const starts=[];let total=0;SC.forEach(s=>{starts.push(total);total+=s.dur;});
+const fmtT=s=>`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+$('totalTxt').textContent=`约 ${Math.floor(total/60)} 分 ${Math.floor(total%60)} 秒`;
+$('startHint').textContent=`建议打开声音 · ${Math.floor(total/60)} 分 ${Math.floor(total%60)} 秒`;
+
+/* ---------- year counter ---------- */
+function fmtYear(v,approx){if(typeof v==='string')return v;if(v===0)v=1;const a=approx?'约 ':'';return v<0?`${a}公元前 ${-v} 年`:`${a}公元 ${v} 年`;}
+function prevVal(i){for(let j=i-1;j>=0;j--){const yk=SC[j].yk;if(yk.length)return yk[yk.length-1][1];}return null;}
+function yearAt(i,L){const sc=SC[i],yk=sc.yk;if(!yk.length)return'';let k=0;for(let j=0;j<yk.length;j++)if(L>=yk[j][0])k=j;
+  const[t0,v]=yk[k],prev=k>0?yk[k-1][1]:prevVal(i);
+  if(typeof v==='number'&&typeof prev==='number'){const e=easeIO(clamp((L-t0)/.9));return fmtYear(Math.round(prev+(v-prev)*e),sc.approx);}
+  return fmtYear(v,sc.approx);}
+
+/* ---------- audio: original pentatonic tune, synthesized ---------- */
+const A={ctx:null,muted:false,ks:{}};
+const NOTE={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+const hz=n=>{const m=n.match(/^([A-G])(#?)(\d)$/);return 440*Math.pow(2,(12*(+m[3]+1)+NOTE[m[1]]+(m[2]?1:0)-69)/12);};
+const BPM=112,SPB=60/BPM;
+const MEL=`D5/.5 E5/.5 D5/.5 B4/.5 A4/1 B4/1|A4/.5 F#4/.5 E4/.5 F#4/.5 A4/2|B4/.5 D5/.5 E5/.5 F#5/.5 E5/1 D5/1|B4/.5 A4/.5 B4/.5 D5/.5 E5/2|
+F#5/.5 E5/.5 D5/.5 E5/.5 D5/.5 B4/.5 A4/1|B4/.5 A4/.5 F#4/.5 E4/.5 F#4/1 A4/1|E4/.5 F#4/.5 A4/.5 B4/.5 A4/.5 F#4/.5 E4/1|D4/2 E4/.5 F#4/.5 A4/1|
+A5/.5 R/.5 A5/.5 F#5/.5 E5/.5 F#5/.5 A5/1|B5/.5 A5/.5 F#5/.5 E5/.5 D5/2|E5/.5 F#5/.5 E5/.5 D5/.5 B4/.5 D5/.5 E5/1|A4/1 B4/.5 D5/.5 E5/2|
+F#5/.5 A5/.5 F#5/.5 E5/.5 D5/1 E5/1|D5/.5 B4/.5 A4/.5 B4/.5 D5/2|E5/.5 D5/.5 B4/.5 A4/.5 F#4/.5 E4/.5 F#4/1|D4/2 R/1 A4/.5 B4/.5`;
+const EV=[];let LOOP=0;
+(()=>{let b=0;MEL.split('|').forEach(bar=>bar.trim().split(/\s+/).forEach(tok=>{const[n,l]=tok.split('/');if(n!=='R')EV.push({b,ty:'mel',f:hz(n),len:+l});b+=+l;}));LOOP=b;
+  const ROOTS='D D B E D B A D D B E A B D A D'.split(' '),FIFTH={D:'A',B:'F#',E:'B',A:'E'},OCT={D:2,B:1,E:2,A:1},ARP={D:['D4','A4'],B:['B3','F#4'],E:['E4','B4'],A:['A3','E4']};
+  ROOTS.forEach((r,i)=>{const s=i*4;
+    EV.push({b:s,ty:'bass',f:hz(r+OCT[r]),len:1.4},{b:s+2,ty:'bass',f:hz(FIFTH[r]+'2'),len:.9},{b:s+3,ty:'bass',f:hz(r+OCT[r]),len:.8});
+    [.5,1.5,2.5,3.5].forEach((o,k)=>EV.push({b:s+o,ty:'arp',f:hz(ARP[r][k%2])}));
+    EV.push({b:s,ty:'drum',v:.55});if(i%2)EV.push({b:s+2.5,ty:'drum',v:.35});
+    EV.push({b:s+1,ty:'wood'},{b:s+3,ty:'wood'},{b:s+3.5,ty:'wood',v:.12});
+    for(let e=0;e<8;e++)EV.push({b:s+e*.5,ty:'shk',v:e%2?.05:.03});
+    if(i%8===0)EV.push({b:s,ty:'cym'});});
+  EV.sort((a,b)=>a.b-b.b);})();
+function audioInit(){
+  const C=window.AudioContext||window.webkitAudioContext;if(!C)return;
+  const ctx=new C();A.ctx=ctx;
+  const comp=ctx.createDynamicsCompressor();comp.threshold.value=-16;comp.ratio.value=4;comp.connect(ctx.destination);
+  A.master=ctx.createGain();A.master.gain.value=A.muted?0:.9;A.master.connect(comp);
+  const len=ctx.sampleRate*2.2,ir=ctx.createBuffer(2,len,ctx.sampleRate);
+  for(let c=0;c<2;c++){const d=ir.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.6);}
+  const conv=ctx.createConvolver();conv.buffer=ir;const rev=ctx.createGain();rev.gain.value=.24;rev.connect(conv);conv.connect(A.master);
+  A.music=ctx.createGain();A.music.gain.value=.5;A.music.connect(A.master);A.music.connect(rev);
+  A.fx=ctx.createGain();A.fx.gain.value=.75;A.fx.connect(A.master);A.fx.connect(rev);
+  A.noise=ctx.createBuffer(1,ctx.sampleRate,ctx.sampleRate);{const d=A.noise.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;}
+  A.i=0;A.loopStart=ctx.currentTime+.15;A.loopN=0;
+  setInterval(schedule,25);
+}
+function ksBuf(f){const key=Math.round(f*10);if(A.ks[key])return A.ks[key];
+  const ctx=A.ctx,sr=ctx.sampleRate,N=Math.max(2,Math.round(sr/f)),len=Math.floor(sr*1.6),buf=ctx.createBuffer(1,len,sr),d=buf.getChannelData(0);
+  const ring=new Float32Array(N);let pv=0;for(let i=0;i<N;i++){const r=Math.random()*2-1;ring[i]=(r+pv)*.5;pv=r;}
+  const rho=Math.pow(.001,1/(f*1.4));let idx=0;
+  for(let i=0;i<len;i++){const nx=(idx+1)%N,v=ring[idx];d[i]=v;ring[idx]=(v+ring[nx])*.5*rho;idx=nx;}
+  return A.ks[key]=buf;}
+function out(node,pan){if(pan&&A.ctx.createStereoPanner){const p=A.ctx.createStereoPanner();p.pan.value=pan;node.connect(p);return p;}return node;}
+function pluck(time,f,vel,pan,len,bend){const ctx=A.ctx,s=ctx.createBufferSource();s.buffer=ksBuf(f);
+  if(bend){s.playbackRate.setValueAtTime(.982,time);s.playbackRate.linearRampToValueAtTime(1,time+.07);}
+  const g=ctx.createGain();g.gain.setValueAtTime(vel,time);g.gain.setTargetAtTime(0,time+len,.12);
+  s.connect(g);out(g,pan).connect(A.music);s.start(time);s.stop(time+len+.8);}
+function tone(time,type,f0,f1,dur,vel,dest,fdur){const ctx=A.ctx,o=ctx.createOscillator(),g=ctx.createGain();o.type=type;
+  o.frequency.setValueAtTime(f0,time);if(f1)o.frequency.exponentialRampToValueAtTime(f1,time+(fdur||dur*.5));
+  g.gain.setValueAtTime(.0001,time);g.gain.exponentialRampToValueAtTime(vel,time+.006);g.gain.exponentialRampToValueAtTime(.0001,time+dur);
+  o.connect(g);g.connect(dest);o.start(time);o.stop(time+dur+.05);return o;}
+function noise(time,dur,vel,ftype,freq,dest,q){const ctx=A.ctx,s=ctx.createBufferSource(),f=ctx.createBiquadFilter(),g=ctx.createGain();
+  s.buffer=A.noise;f.type=ftype;f.frequency.value=freq;if(q)f.Q.value=q;
+  g.gain.setValueAtTime(.0001,time);g.gain.exponentialRampToValueAtTime(vel,time+.005);g.gain.exponentialRampToValueAtTime(.0001,time+dur);
+  s.connect(f);f.connect(g);g.connect(dest);s.start(time,Math.random()*.5);s.stop(time+dur+.05);return f;}
+function playEv(e,t){const ctx=A.ctx;switch(e.ty){
+  case 'mel':pluck(t,e.f,.62,-.18,Math.max(.35,e.len*SPB*1.25),true);break;
+  case 'arp':pluck(t,e.f,.17,.3,.35,false);break;
+  case 'bass':{const o=ctx.createOscillator(),lp=ctx.createBiquadFilter(),g=ctx.createGain();o.type='triangle';o.frequency.value=e.f;lp.type='lowpass';lp.frequency.value=700;
+    const d=e.len*SPB;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.42,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d+.25);
+    o.connect(lp);lp.connect(g);g.connect(A.music);o.start(t);o.stop(t+d+.3);break;}
+  case 'drum':tone(t,'sine',150,48,.42,e.v,A.music,.16);noise(t,.06,e.v*.25,'lowpass',900,A.music);break;
+  case 'wood':tone(t,'triangle',1150,0,.07,e.v||.22,A.music);tone(t,'sine',1720,0,.05,(e.v||.22)*.4,A.music);break;
+  case 'shk':if(A.loopN>0)noise(t,.045,e.v,'highpass',7000,A.music);break;
+  case 'cym':noise(t,.7,.1,'bandpass',6200,A.music,.8);break;}}
+function schedule(){const ctx=A.ctx;if(!ctx||ctx.state!=='running')return;const now=ctx.currentTime;
+  for(;;){const e=EV[A.i],t=A.loopStart+e.b*SPB;if(t>now+.2)break;if(t>=now-.05)playEv(e,t);
+    if(++A.i>=EV.length){A.i=0;A.loopStart+=LOOP*SPB;A.loopN++;}}}
+function sfx(type){const ctx=A.ctx;if(!ctx||ctx.state!=='running')return;const t=ctx.currentTime+.01,F=A.fx;switch(type){
+  case 'gong':{const o=tone(t,'sine',600,760,1.1,.32,F,.28);tone(t,'sine',600*1.52,760*1.52,.7,.1,F,.28);noise(t,.08,.16,'bandpass',3200,F,1.5);void o;break;}
+  case 'pop':tone(t,'sine',520,1100,.14,.22,F,.07);break;
+  case 'stamp':tone(t,'sine',140,60,.22,.4,F,.12);noise(t,.07,.14,'lowpass',1200,F);break;
+  case 'boom':noise(t,1.1,.9,'lowpass',380,F);tone(t,'sine',90,32,.8,.7,F,.5);break;
+  case 'snip':noise(t,.03,.35,'highpass',4000,F);noise(t+.09,.03,.35,'highpass',4000,F);break;
+  case 'whoosh':{const f=noise(t,.95,.32,'bandpass',300,F,1.3);f.frequency.exponentialRampToValueAtTime(2800,t+.8);break;}
+  case 'spark':for(let k=0;k<9;k++)noise(t+k*.06+Math.random()*.04,.03,.18,'highpass',5000,F);tone(t,'sine',300,900,.25,.08,F);break;}}
+function musicTo(v,tc){if(A.ctx)A.music.gain.setTargetAtTime(v,A.ctx.currentTime,tc||.2);}
+
+/* ---------- player ---------- */
+const track=$('track');
+SC.forEach((sc,i)=>{const b=document.createElement('button');b.type='button';b.className='seg';b.style.flexGrow=sc.dur;b.title=sc.label;b.setAttribute('aria-label',`跳到：${sc.label}`);
+  b.innerHTML='<span class="bar"><span class="fill"></span></span><span class="lb"></span>';b.querySelector('.lb').textContent=sc.label;
+  b.addEventListener('click',e=>{e.stopPropagation();seek(starts[i]+.001);});track.appendChild(b);sc.seg=b;sc.fillEl=b.querySelector('.fill');});
+let T=4.9,playing=false,started=false,lastNow=null,cur=-1,prevLocal=-1,lastCap=null,lastYear=null,lastSec=-1,boilK=0,lastBoil=0;
+const idxAt=t=>{let i=SC.length-1;while(i>0&&starts[i]>t)i--;return i;};
+function upd(it,L){switch(it.k){
+  case 'draw':{const p=clamp((L-it.t)/it.dur),off=f1(it.len*(1-easeOut(p)));if(off!==it.o){it.e.style.strokeDashoffset=off;it.o=off;}
+    if(it.fill)it.e.style.fillOpacity=clamp((L-it.t-it.dur*.6)/.35);else if(it.paper)it.e.style.fillOpacity=L>=it.t?1:0;break;}
+  case 'type':{const n=L<it.t?0:Math.min(it.chars.length,Math.ceil((L-it.t)/it.dur*it.chars.length));if(n!==it.n){it.e.textContent=it.chars.slice(0,n).join('');it.n=n;}break;}
+  case 'fade':it.e.style.opacity=clamp((L-it.t)/it.dur);break;
+  case 'show':it.e.style.opacity=clamp((L-it.t)/.25);break;
+  case 'wipe':it.r.setAttribute('width',f1(it.w*easeIO(clamp((L-it.t)/it.dur))));break;
+  case 'pop':{const p=clamp((L-it.t)/it.dur);it.e.style.opacity=L<it.t?0:1;it.e.style.transform=`scale(${L<it.t?.01:backOut(p).toFixed(3)})`;break;}
+  case 'move':it.e.setAttribute('transform',it.base+' '+it.fn(Math.max(0,L)));break;}}
+function render(t,fire){
+  const i=idxAt(t),sc=SC[i],L=t-starts[i];
+  if(i!==cur){if(cur>=0){SC[cur].g.style.display='none';}sc.g.style.display='';cur=i;prevLocal=-1;
+    SC.forEach((s,j)=>{s.seg.classList.toggle('on',j===i);s.fillEl.style.width=j<i?'100%':'0';});$('chapName').textContent=i?`第 ${i} 章 · ${sc.label}`:'开场';}
+  if(fire&&A.ctx){if(i>0&&prevLocal<0)sfx('gong');sc.sfx.forEach(s=>{if(s.t>prevLocal&&s.t<=L)sfx(s.type);});}
+  prevLocal=L;
+  for(const it of sc.items)upd(it,L);
+  sc.g.style.opacity=i<SC.length-1?1-clamp((L-(sc.dur-.35))/.35):1;
+  const y=yearAt(i,L);if(y!==lastYear){yearEl.textContent=y;lastYear=y;}
+  const cs=[...sc.caption],n=started?clamp(Math.floor((L-.3)*24),0,cs.length):0,cap=cs.slice(0,n).join('');if(cap!==lastCap){capEl.textContent=cap;lastCap=cap;}
+  sc.fillEl.style.width=(started?clamp(L/sc.dur)*100:0)+'%';
+  const sec=Math.floor(started?t:0);if(sec!==lastSec){$('timeTxt').textContent=`${fmtT(sec)} / ${fmtT(total)}`;lastSec=sec;}
+}
+function loop(now){
+  if(playing){if(lastNow!=null)T+=Math.min(.1,(now-lastNow)/1000);if(T>=total){T=total;finish();}}
+  lastNow=now;render(T,playing);
+  if(!reduce&&now-lastBoil>140){boilK=(boilK+1)%3;art.setAttribute('filter',`url(#b${boilK})`);lastBoil=now;}
+  requestAnimationFrame(loop);}
+const ICO_PLAY='<path d="M7 4.5v15l13-7.5z"/>',ICO_PAUSE='<path d="M6 4.5h4.5v15H6zM13.5 4.5H18v15h-4.5z"/>';
+function syncBtn(){$('playIco').innerHTML=playing?ICO_PAUSE:ICO_PLAY;$('playBtn').setAttribute('aria-label',playing?'暂停':'播放');}
+function begin(){
+  if(!started||T>=total-.01){T=0;started=true;cur=-1;}
+  if(!A.ctx)audioInit();
+  if(A.ctx){A.ctx.resume();musicTo(.5,.1);}
+  playing=true;$('start').hidden=true;syncBtn();}
+function pause(){playing=false;if(A.ctx)A.ctx.suspend();syncBtn();}
+function finish(){playing=false;syncBtn();musicTo(0,.6);setTimeout(()=>{if(!playing&&A.ctx)A.ctx.suspend();},2600);
+  $('start').hidden=false;$('start').querySelector('.seal').textContent='重播';$('startHint').textContent='再看一遍';}
+function toggle(){playing?pause():begin();}
+function seek(t){if(!started){started=true;}T=clamp(t,0,total-.01);if(T<total-.02&&!playing&&$('start').querySelector('.seal').textContent==='重播'){$('start').hidden=true;}
+  render(T,false);}
+$('start').addEventListener('click',begin);
+$('playBtn').addEventListener('click',toggle);
+$('prevBtn').addEventListener('click',()=>{const i=idxAt(T);seek(T-starts[i]>1.5?starts[i]:starts[Math.max(0,i-1)]);});
+$('nextBtn').addEventListener('click',()=>{const i=idxAt(T);if(i<SC.length-1)seek(starts[i+1]);});
+function setMute(m){A.muted=m;if(A.ctx)A.master.gain.setTargetAtTime(m?0:.9,A.ctx.currentTime,.05);
+  $('muteIco').innerHTML=m?'<path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9l6 6M22 9l-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>':'<path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>';
+  $('muteBtn').setAttribute('aria-label',m?'取消静音':'静音');}
+$('muteBtn').addEventListener('click',()=>setMute(!A.muted));
+let drag=false;
+const tAtX=x=>{const r=track.getBoundingClientRect();return clamp((x-r.left)/r.width)*total;};
+track.addEventListener('pointerdown',e=>{drag=true;track.setPointerCapture(e.pointerId);seek(tAtX(e.clientX));});
+track.addEventListener('pointermove',e=>{if(drag)seek(tAtX(e.clientX));});
+track.addEventListener('pointerup',()=>{drag=false;});track.addEventListener('pointercancel',()=>{drag=false;});
+document.addEventListener('keydown',e=>{if(e.target.closest&&e.target.closest('button')&&(e.key===' '||e.key==='Enter'))return;
+  if(e.key===' '||e.key==='k'){e.preventDefault();toggle();}
+  else if(e.key==='ArrowRight'){$('nextBtn').click();}else if(e.key==='ArrowLeft'){$('prevBtn').click();}
+  else if(e.key==='m'||e.key==='M'){setMute(!A.muted);}});
+window.__seek=t=>{started=true;T=t;render(t,false);};
+window.__total=total;window.__starts=starts;
+render(T,false);requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
