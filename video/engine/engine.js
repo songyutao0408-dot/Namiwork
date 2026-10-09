@@ -1,0 +1,1 @@
+../../.claude/skills/huashu-art-motion/scripts/engine/engine.js
