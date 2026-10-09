@@ -23,6 +23,29 @@
 
 所有事实类内容以 `docs/纳米Work产品背景.md` 为唯一权威来源。
 
+## 宣传动效片（`video/`）
+
+基于 [awesome-opus5-5-videos](https://github.com/yihui-dev/awesome-opus5-5-videos) 中的 UI 动效模板改写的一支 18 秒「动态网页交付」短片：Logo → 输入需求 → 专家团接单 → 可生成 → 可验收（含手机端适配）→ 可分享 → 可更新 → 口号，首尾相接可循环。
+
+| 文件 | 说明 |
+|---|---|
+| `video/prompt.md` | 纳米Work 专用 prompt（输入项已按产品背景资料填好，可复用/修改后重新生成） |
+| `video/delivery-film.html` | 按 prompt 实现的动效：单个 canvas + 纯函数 `draw(t)`，浏览器直接打开即循环播放，点击画布暂停；`?t=秒数` 可定格某一帧 |
+| `video/render.cjs` | 离线渲染脚本：输出缩略图检查表或 1920×1080 / 60fps 的 MP4 |
+| `video/delivery-film.mp4` | 渲染好的成片（无声） |
+| `video/contact-sheet.png` | 每拍一帧的缩略图检查表 |
+
+重新渲染需要 Node、[Playwright](https://playwright.dev)（含 Chromium）和 ffmpeg：
+
+```bash
+npm i -D playwright && npx playwright install chromium   # 首次
+node video/render.cjs --sheet            # 每拍一帧 → video/contact-sheet.png
+node video/render.cjs                    # 60fps + 6 子帧运动模糊 → video/delivery-film.mp4（约 10 分钟）
+node video/render.cjs --fps 30 --sub 1   # 快速预览
+```
+
+图表均为示意形态、不标具体数值；画面中出现的文案均出自 `docs/纳米Work产品背景.md`。
+
 ## 本地预览
 
 无需构建工具，直接用浏览器打开 `index.html` 即可；或起一个本地静态服务：

@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>纳米Work 交付动效</title>
+<meta name="description" content="纳米Work「动态网页交付」UI 动效片：生成 → 验收 → 分享 → 更新。按 video/prompt.md 生成。">
+<style>
+  :root { --bg: #f4f7fb; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; background: var(--bg); }
+  body { display: grid; place-items: center; padding: 16px; }
+  canvas { display: block; width: 100%; max-width: 1600px; aspect-ratio: 16 / 9; height: auto; cursor: pointer; }
+  body.render { padding: 0; }
+  body.render canvas { width: 1920px; max-width: none; }
+</style>
+</head>
+<body>
+<canvas id="film" width="1920" height="1080"></canvas>
+<script>
+/*
+ * 纳米Work「动态网页交付」UI 动效片
+ * 规则（见 prompt.md）：一个 canvas，一个 draw(t)，无 CSS transition、无定时器、帧间不保留状态。
+ * 所有动画都是时间的纯函数：多次改变目标的值 = 每次改变叠加一个闭式弹簧。
+ */
+const W = 1920, H = 1080;
+const BPM = 120, B = 60 / BPM, BEATS = 36, DUR = BEATS * B;   // 18s
+const C = {
+  bg: '#f4f7fb', ink: '#1a2436', soft: '#4a5871', muted: '#8d99ad', line: '#e3e9f2',
+  card: '#ffffff', green: '#17c37b', greenTint: 'rgba(23,195,123,.12)', red: '#e5484d'
+};
+const FONT = '"PingFang SC","Noto Sans SC","Microsoft YaHei","WenQuanYi Zen Hei",sans-serif';
+
+const canvas = document.getElementById('film');
+const ctx = canvas.getContext('2d');
+
+/* ---------- 数学 ---------- */
+const clamp01 = x => Math.max(0, Math.min(1, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const ease = x => { x = clamp01(x); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+const ramp = (t, a, b) => ease((t - a * B) / ((b - a) * B));
+
+// 闭式弹簧阶跃响应（z<1 欠阻尼，只有极轻微回弹）
+function spring(x, w = 14, z = 0.8) {
+  if (x <= 0) return 0;
+  if (z >= 1) return 1 - Math.exp(-w * x) * (1 + w * x);
+  const wd = w * Math.sqrt(1 - z * z);
+  return 1 - Math.exp(-z * w * x) * (Math.cos(wd * x) + (z * w / wd) * Math.sin(wd * x));
+}
+// 多次改变目标：每次改变叠加一个弹簧
+function track(keys, w = 13, z = 0.82) {
+  return t => {
+    const base = keys[0][1], arr = Array.isArray(base);
+    let v = arr ? base.slice() : base;
+    for (let i = 1; i < keys.length; i++) {
+      const s = spring(t - keys[i][0] * B, w, z);
+      if (s === 0) break;
+      if (arr) for (let j = 0; j < v.length; j++) v[j] += (keys[i][1][j] - keys[i - 1][1][j]) * s;
+      else v += (keys[i][1] - keys[i - 1][1]) * s;
+    }
+    return v;
+  };
+}
+// 内容进出场（临界阻尼，无回弹）
+function vis(t, a, b) {
+  const i = a == null ? 1 : spring(t - a * B, 18, 1);
+  const o = b == null ? 0 : spring(t - b * B, 18, 1);
+  return clamp01(i * (1 - o));
+}
+const pop = (t, beat) => spring(t - beat * B, 17, 0.74);
+// 点击按下的瞬时凹陷
+const press = (t, beat) => clamp01(spring(t - beat * B, 30, 1) - spring(t - beat * B - 0.12, 22, 1));
+// 打字
+const typed = (t, s, a, b) => s.slice(0, Math.floor(s.length * clamp01((t - a * B) / ((b - a) * B))));
+const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+
+/* ---------- 画布工具 ---------- */
+function rr(x, y, w, h, r) {
+  w = Math.max(0, w); h = Math.max(0, h);
+  r = Math.max(0, Math.min(r, w / 2, h / 2));
+  ctx.beginPath(); ctx.roundRect(x, y, w, h, r);
+}
+function txt(s, x, y, size, color, weight = 400, align = 'left') {
+  ctx.font = `${weight} ${size}px ${FONT}`;
+  ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = 'middle';
+  ctx.fillText(s, x, y);
+}
+function textW(s, size, weight = 400) { ctx.font = `${weight} ${size}px ${FONT}`; return ctx.measureText(s).width; }
+// 一个内容层：先模糊淡入，下一次变形前模糊淡出
+function layer(t, a, b, fn, blurMax = 10) {
+  const v = vis(t, a, b);
+  if (v < 0.004) return;
+  ctx.save();
+  ctx.globalAlpha *= v;
+  const bl = (1 - v) * blurMax;
+  if (bl > 0.25) ctx.filter = `blur(${bl.toFixed(2)}px)`;
+  fn(v);
+  ctx.restore();
+}
+function scaled(cx, cy, s, fn) {
+  ctx.save(); ctx.translate(cx, cy); ctx.scale(s, s); ctx.translate(-cx, -cy); fn(); ctx.restore();
+}
+function popIn(t, beat, cx, cy, fn) {
+  const p = pop(t, beat);
+  if (p <= 0.001) return;
+  ctx.save(); ctx.globalAlpha *= clamp01(p);
+  scaled(cx, cy, 0.9 + 0.1 * p, fn);
+  ctx.restore();
+}
+function check(x, y, s, color, lw = 3) {
+  ctx.beginPath();
+  ctx.moveTo(x - 0.36 * s, y + 0.02 * s);
+  ctx.lineTo(x - 0.1 * s, y + 0.28 * s);
+  ctx.lineTo(x + 0.38 * s, y - 0.28 * s);
+  ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke();
+}
+function checkItem(t, x, y, label, doneBeat, color = '#fff') {
+  const d = doneBeat == null ? 0 : pop(t, doneBeat);
+  ctx.beginPath(); ctx.arc(x, y, 13, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 2; ctx.stroke();
+  if (d > 0.001) {
+    ctx.save(); ctx.globalAlpha *= clamp01(d);
+    ctx.beginPath(); ctx.arc(x, y, 13 * Math.min(d, 1.05), 0, Math.PI * 2); ctx.fillStyle = C.green; ctx.fill();
+    check(x, y, 16, '#fff', 3);
+    ctx.restore();
+  }
+  txt(label, x + 28, y, 22, color, 500);
+}
+// 平滑折线
+function smoothPath(pts) {
+  ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 1; i < pts.length - 1; i++) {
+    const mx = (pts[i][0] + pts[i + 1][0]) / 2, my = (pts[i][1] + pts[i + 1][1]) / 2;
+    ctx.quadraticCurveTo(pts[i][0], pts[i][1], mx, my);
+  }
+  const l = pts[pts.length - 1]; ctx.lineTo(l[0], l[1]);
+}
+function spark(x, y, w, h, vals, prog, color, lw = 3) {
+  const pts = vals.map((v, i) => [x + w * i / (vals.length - 1), y + h * (1 - v)]);
+  ctx.save(); ctx.beginPath(); ctx.rect(x - 4, y - 8, (w + 8) * clamp01(prog), h + 16); ctx.clip();
+  smoothPath(pts); ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke();
+  ctx.restore();
+}
+function card(x, y, w, h, title, fn) {
+  if (w < 2) return;
+  ctx.save();
+  rr(x, y, w, h, 16); ctx.fillStyle = C.bg; ctx.fill(); ctx.clip();
+  if (title) txt(title, x + 24, y + 36, 22, C.ink, 600);
+  fn && fn();
+  ctx.restore();
+}
+
+/* ---------- 数据（示意形态，不标数值） ---------- */
+const SPARKS = [
+  [.35, .42, .38, .5, .47, .58, .55, .66],
+  [.5, .44, .52, .48, .6, .57, .68, .72],
+  [.3, .36, .33, .45, .52, .49, .6, .7]
+];
+const LINE_A = [.42, .5, .46, .58, .55, .64, .6, .72, .68, .78, .74, .86];
+const LINE_B = [.3, .38, .52, .48, .62, .58, .7, .66, .8, .76, .88, .84];
+const BARS = [.35, .55, .48, .72, .9, .66, .58, .8];
+const CHANNELS = [[.6, .78], [.45, .7], [.8, .62], [.5, .85]];
+const qrHash = (i, j) => { const x = Math.sin(i * 127.1 + j * 311.7) * 43758.5453; return x - Math.floor(x); };
+
+/* ---------- 一个形状，永不切镜 ---------- */
+const st = (x, y, w, h, r, c) => [x, y, w, h, r, ...hex(c)];
+const SHAPE = {
+  logo:    st(0, 0, 160, 160, 40, C.green),
+  input:   st(0, 0, 1100, 120, 60, C.card),
+  pill:    st(0, 0, 580, 112, 56, C.ink),
+  browser: st(0, 10, 1280, 760, 24, C.card),
+  phone:   st(0, 0, 400, 800, 56, C.card),
+  share:   st(0, 0, 620, 700, 32, C.card),
+  logoL:   st(-480, 0, 160, 160, 40, C.green)
+};
+const shapeT = track([
+  [0, SHAPE.logo], [1.4, SHAPE.input], [6.3, SHAPE.pill], [8.0, SHAPE.browser],
+  [16.0, SHAPE.phone], [20.2, SHAPE.share], [24.6, SHAPE.browser], [30.0, SHAPE.logoL], [34.0, SHAPE.logo]
+], 13, 0.82);
+
+/* ---------- 镜头 ---------- */
+const camS = track([[0, 1.5], [1.4, 1.3], [6.3, 1.5], [8.0, 0.97], [16.0, 1.1], [20.2, 1.12], [24.6, 0.97], [30.0, 1.15], [34.0, 1.5]], 9, 0.9);
+const camY = track([[0, 0], [8.0, -25], [30.0, 0]], 9, 0.9);
+
+/* ---------- 光标 ---------- */
+const cursorT = track([
+  [0, [700, 460]], [1.2, [380, 250]], [1.55, [-380, 15]], [2.6, [-220, 150]],
+  [5.25, [490, 0]], [6.4, [250, 170]], [8.6, [480, 300]], [11.0, [300, 420]],
+  [14.0, [430, -275]], [14.75, [390, -120]], [16.1, [60, 240]], [16.9, [60, -10]],
+  [17.7, [150, 330]], [20.5, [260, 300]], [21.45, [188, 152]], [22.4, [270, 280]],
+  [24.8, [-150, 340]], [25.6, [-60, 450]], [26.85, [270, 340]], [27.7, [520, 460]], [29.2, [1200, 760]]
+], 11, 0.9);
+const CLICKS = [2.15, 5.85, 14.55, 15.25, 22.0, 25.3, 27.35];
+const HOLD = [16.8, 17.5];   // 手机端一次拖拽滑动
+
+// 手机内容滚动：按住时跟随光标，松手后停在原处（纯函数）
+function phoneScroll(t) {
+  if (t < HOLD[0] * B) return 0;
+  const y0 = cursorT(HOLD[0] * B)[1];
+  const y = cursorT(Math.min(t, HOLD[1] * B))[1];
+  return Math.max(0, Math.min(260, y0 - y));
+}
+
+/* ---------- 各状态内容 ---------- */
+function drawLogoMark(t, sh) {
+  const v = Math.max(vis(t, null, 1.0), vis(t, 30.3, null));
+  if (v < 0.004) return;
+  ctx.save(); ctx.globalAlpha *= v;
+  if ((1 - v) * 8 > 0.25) ctx.filter = `blur(${((1 - v) * 8).toFixed(2)}px)`;
+  txt('纳', sh.x, sh.y + 4, 84, '#fff', 700, 'center');
+  ctx.restore();
+}
+
+function drawInput(t, sh) {
+  layer(t, 1.8, 6.2, () => {
+    const L = sh.x - 550, T = sh.y - 60;
+    // 四角星图标（统一线宽）
+    const ix = L + 56, iy = T + 60;
+    ctx.beginPath();
+    ctx.moveTo(ix, iy - 16); ctx.quadraticCurveTo(ix, iy, ix + 16, iy);
+    ctx.quadraticCurveTo(ix, iy, ix, iy + 16); ctx.quadraticCurveTo(ix, iy, ix - 16, iy);
+    ctx.quadraticCurveTo(ix, iy, ix, iy - 16); ctx.closePath();
+    ctx.fillStyle = C.ink; ctx.fill();
+
+    const s = typed(t, '把每天的广告投放数据做成一个看板，手机上也能看', 2.3, 5.2);
+    const x0 = L + 92;
+    if (!s) txt('告诉纳米Work，你想让它干什么…', x0, T + 60, 34, C.muted, 400);
+    else txt(s, x0, T + 60, 34, C.ink, 500);
+    // 光标插入符（闪烁是时间的函数）
+    const caretOn = (t % 1) < 0.55 || (t > 2.3 * B && t < 5.2 * B);
+    if (t > 2.15 * B && caretOn) {
+      const cx = x0 + textW(s, 34, 500) + 4;
+      ctx.fillStyle = C.green; ctx.fillRect(cx, T + 40, 3, 40);
+    }
+    // 发送按钮：强调色元素
+    const p = press(t, 5.85), ready = clamp01((t - 5.0 * B) / (0.3 * B));
+    scaled(L + 1040, T + 60, 1 - 0.12 * p, () => {
+      ctx.beginPath(); ctx.arc(L + 1040, T + 60, 38, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(23,195,123,${0.35 + 0.65 * ready})`; ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(L + 1040, T + 76); ctx.lineTo(L + 1040, T + 44);
+      ctx.moveTo(L + 1027, T + 57); ctx.lineTo(L + 1040, T + 44); ctx.lineTo(L + 1053, T + 57);
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke();
+    });
+  });
+}
+
+function drawPill(t, sh) {
+  layer(t, 6.55, 7.9, () => {
+    const L = sh.x - 290, T = sh.y - 56;
+    const av = [['数', C.green, '#fff'], ['设', '#ffffff', C.ink], ['开', '#cfd8e6', C.ink]];
+    av.forEach(([ch, bg, fg], i) => {
+      const cx = L + 70 + i * 50, cy = T + 56;
+      popIn(t, 6.6 + i * 0.25, cx, cy, () => {
+        ctx.beginPath(); ctx.arc(cx, cy, 32, 0, Math.PI * 2);
+        ctx.fillStyle = bg; ctx.fill(); ctx.lineWidth = 4; ctx.strokeStyle = C.ink; ctx.stroke();
+        txt(ch, cx, cy + 1, 26, fg, 700, 'center');
+      });
+    });
+    popIn(t, 6.85, L + 240, T + 56, () => {
+      txt('专家团已接单', L + 236, T + 40, 34, '#fff', 700);
+      txt('数据 · 设计 · 开发 协同开工', L + 236, T + 80, 21, C.muted, 400);
+    });
+  });
+}
+
+const tabL = track([[0, 0], [14.55, 1]], 9, 0.85);
+const tabR = track([[0, 0], [14.55, 1]], 18, 0.8);
+const lwT = track([[0, 740], [27.7, 490]], 12, 0.85);
+const bwT = track([[0, 440], [27.7, 320]], 12, 0.85);
+
+// mode 1：生成 + 验收；mode 2：对话更新
+function drawBrowser(t, sh, mode) {
+  const L = sh.x - 640, T = sh.y - 380;
+  const g = beat => mode === 2 ? 1 : pop(t, beat);
+  const gp = (cx, cy, beat, fn) => mode === 2 ? fn() : popIn(t, beat, cx, cy, fn);
+
+  // 顶栏
+  [28, 52, 76].forEach(x => { ctx.beginPath(); ctx.arc(L + x, T + 28, 7, 0, Math.PI * 2); ctx.fillStyle = '#d5dbe5'; ctx.fill(); });
+  rr(L + 120, T + 11, 900, 34, 17); ctx.fillStyle = C.bg; ctx.fill();
+  if (mode === 1) {
+    layer(t, null, 12.7, () => txt('正在生成页面…', L + 146, T + 28, 18, C.muted, 400), 6);
+    layer(t, 12.8, null, () => {
+      ctx.beginPath(); ctx.arc(L + 146, T + 28, 5, 0, Math.PI * 2); ctx.fillStyle = C.green; ctx.fill();
+      txt('广告投放日看板 · 已生成', L + 162, T + 28, 18, C.soft, 500);
+    }, 6);
+    // 生成进度条
+    const pg = ramp(t, 8.3, 12.8), pa = 1 - vis(t, 12.9, null);
+    if (pa > 0.01) { ctx.save(); ctx.globalAlpha *= pa; ctx.fillStyle = C.green; ctx.fillRect(L, T + 55, 1280 * pg, 3); ctx.restore(); }
+  } else {
+    ctx.beginPath(); ctx.arc(L + 146, T + 28, 5, 0, Math.PI * 2); ctx.fillStyle = C.green; ctx.fill();
+    txt('广告投放日看板 · 已生成', L + 162, T + 28, 18, C.soft, 500);
+    popIn(t, 28.7, L + 1200, T + 28, () => {
+      rr(L + 1150, T + 13, 100, 30, 15); ctx.fillStyle = C.greenTint; ctx.fill();
+      txt('已更新', L + 1200, T + 28, 17, '#0e9a60', 600, 'center');
+    });
+  }
+  ctx.fillStyle = C.line; ctx.fillRect(L, T + 56, 1280, 1.5);
+
+  // 标题 + 时间段切换
+  gp(L + 200, T + 120, 8.6, () => {
+    txt('广告投放日看板', L + 40, T + 108, 34, C.ink, 700);
+    txt('按日汇总 · 手机可看', L + 40, T + 146, 19, C.muted, 400);
+  });
+  gp(L + 1070, T + 98, 8.8, () => {
+    rr(L + 900, T + 80, 340, 38, 19); ctx.fillStyle = C.bg; ctx.fill();
+    const seg = 340 / 3;
+    const a = mode === 2 ? 1 : tabL(t), b = mode === 2 ? 1 : tabR(t);
+    const x1 = L + 900 + 4 + a * seg, x2 = L + 900 + seg - 4 + b * seg;
+    rr(x1, T + 84, x2 - x1, 30, 15); ctx.fillStyle = '#fff'; ctx.fill();
+    ctx.strokeStyle = C.line; ctx.lineWidth = 1.5; ctx.stroke();
+    ['今日', '近7天', '近30天'].forEach((s, i) => txt(s, L + 900 + seg * i + seg / 2, T + 99, 17, i === Math.round(mode === 2 ? 1 : tabR(t)) ? C.ink : C.muted, 500, 'center'));
+  });
+
+  // 指标卡
+  ['曝光', '点击', '转化'].forEach((name, i) => {
+    const x = L + 40 + i * 400, y = T + 176;
+    gp(x + 190, y + 70, 9.0 + i * 0.4, () => {
+      rr(x, y, 380, 140, 16); ctx.fillStyle = C.bg; ctx.fill();
+      txt(name, x + 24, y + 34, 22, C.soft, 500);
+      rr(x + 262, y + 20, 96, 28, 14); ctx.fillStyle = C.greenTint; ctx.fill();
+      txt('较昨日 ↑', x + 310, y + 34, 15, '#0e9a60', 600, 'center');
+      spark(x + 24, y + 70, 332, 50, SPARKS[i], mode === 2 ? 1 : ramp(t, 9.2 + i * 0.4, 10.4 + i * 0.4), C.ink, 3);
+    });
+    if (mode === 1 && i === 2) layer(t, 15.25, 15.95, () => {
+      rr(x - 4, y - 4, 388, 148, 19); ctx.strokeStyle = C.ink; ctx.lineWidth = 3; ctx.stroke();
+    }, 4);
+  });
+
+  // 图表区
+  const lw = mode === 2 ? lwT(t) : 740, bw = mode === 2 ? bwT(t) : 440;
+  const cy0 = T + 336, ch = 384;
+  if (g(10.0) > 0.001) {
+    ctx.save(); ctx.globalAlpha *= clamp01(g(10.0));
+    card(L + 40, cy0, lw, ch, '投放趋势', () => {
+      const px = L + 64, pw = lw - 48, py = cy0 + 80, ph = ch - 120;
+      ctx.fillStyle = C.line;
+      for (let k = 0; k < 4; k++) ctx.fillRect(px, py + ph * k / 3, pw, 1.5);
+      const m = mode === 2 ? 1 : spring(t - 14.55 * B, 12, 0.85);
+      const vals = LINE_A.map((v, i) => lerp(v, LINE_B[i], m));
+      const pts = vals.map((v, i) => [px + pw * i / (vals.length - 1), py + ph * (1 - v)]);
+      const prog = mode === 2 ? 1 : ramp(t, 10.2, 11.4);
+      ctx.save(); ctx.beginPath(); ctx.rect(px - 6, py - 20, (pw + 12) * prog, ph + 40); ctx.clip();
+      smoothPath(pts); ctx.lineTo(px + pw, py + ph); ctx.lineTo(px, py + ph); ctx.closePath();
+      ctx.fillStyle = 'rgba(23,195,123,.08)'; ctx.fill();
+      smoothPath(pts); ctx.strokeStyle = C.green; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.stroke();
+      ctx.restore();
+    });
+    ctx.restore();
+  }
+  if (g(11.2) > 0.001) {
+    ctx.save(); ctx.globalAlpha *= clamp01(g(11.2));
+    const bx = L + 40 + lw + 20;
+    card(bx, cy0, bw, ch, '各时段点击', () => {
+      const n = BARS.length, gap = 14, inner = bw - 48, barW = (inner - gap * (n - 1)) / n;
+      BARS.forEach((v, i) => {
+        const gr = mode === 2 ? 1 : spring(t - (11.4 + i * 0.12) * B, 14, 0.82);
+        const hgt = (ch - 120) * v * gr;
+        rr(bx + 24 + i * (barW + gap), cy0 + ch - 40 - hgt, barW, hgt, 6); ctx.fillStyle = C.ink; ctx.fill();
+      });
+    });
+    ctx.restore();
+  }
+  if (mode === 2 && pop(t, 27.9) > 0.001) {
+    const nx = L + 40 + lw + 20 + bw + 20, nw = L + 1240 - nx;
+    ctx.save(); ctx.globalAlpha *= clamp01(pop(t, 27.9));
+    card(nx, cy0, nw, ch, '按渠道对比', () => {
+      const inner = nw - 48, gw = inner / CHANNELS.length;
+      CHANNELS.forEach((pair, i) => {
+        pair.forEach((v, k) => {
+          const gr = spring(t - (28.1 + i * 0.15 + k * 0.06) * B, 14, 0.82);
+          const hgt = (ch - 150) * v * gr, bwid = gw * 0.3;
+          rr(nx + 24 + i * gw + gw * 0.16 + k * (bwid + 6), cy0 + ch - 62 - hgt, bwid, hgt, 6);
+          ctx.fillStyle = k ? C.green : C.ink; ctx.fill();
+        });
+        txt('渠道' + 'ABCD'[i], nx + 24 + i * gw + gw / 2, cy0 + ch - 34, 16, C.muted, 500, 'center');
+      });
+    });
+    ctx.restore();
+  }
+
+  if (mode === 1) {
+    // 扫描验收
+    layer(t, 12.95, 14.6, () => {
+      const y = T + 57 + (760 - 57) * ramp(t, 13.0, 14.4);
+      ctx.fillStyle = 'rgba(23,195,123,.07)'; ctx.fillRect(L, Math.max(T + 57, y - 90), 1280, Math.min(90, y - T - 57));
+      ctx.fillStyle = C.green; ctx.fillRect(L, y - 1.5, 1280, 3);
+    }, 0);
+    // 自动验收清单
+    layer(t, 13.2, 15.9, () => {
+      const x = L + 800, y = T + 336;
+      ctx.save();
+      ctx.shadowColor = 'rgba(10,22,40,.18)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 10;
+      rr(x, y, 440, 384, 16); ctx.fillStyle = C.ink; ctx.fill();
+      ctx.restore();
+      txt('自动验收', x + 36, y + 52, 26, '#fff', 700);
+      txt('打开成果，逐项检查', x + 36, y + 90, 19, C.muted);
+      checkItem(t, x + 50, y + 160, '页面展示', 13.9);
+      checkItem(t, x + 50, y + 224, '按钮点击', 14.75);
+      checkItem(t, x + 50, y + 288, '页面跳转', 15.45);
+    });
+  } else {
+    // 对话更新
+    layer(t, 25.0, 27.6, () => {
+      const x = L + 340, y = T + 676;
+      ctx.save();
+      ctx.shadowColor = 'rgba(10,22,40,.16)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 10;
+      rr(x, y, 600, 64, 32); ctx.fillStyle = '#fff'; ctx.fill();
+      ctx.restore();
+      rr(x, y, 600, 64, 32); ctx.strokeStyle = C.line; ctx.lineWidth = 1.5; ctx.stroke();
+      const s = typed(t, '加一个按渠道对比的图', 25.5, 26.9);
+      if (!s) txt('继续对话，随时修改…', x + 32, y + 32, 24, C.muted);
+      else txt(s, x + 32, y + 32, 24, C.ink, 500);
+      if (t > 25.3 * B && ((t % 1) < 0.55 || t < 26.9 * B)) { ctx.fillStyle = C.green; ctx.fillRect(x + 34 + textW(s, 24, 500), y + 18, 3, 28); }
+      const p = press(t, 27.35);
+      scaled(x + 568, y + 32, 1 - 0.12 * p, () => {
+        ctx.beginPath(); ctx.arc(x + 568, y + 32, 22, 0, Math.PI * 2); ctx.fillStyle = C.green; ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(x + 568, y + 42); ctx.lineTo(x + 568, y + 22);
+        ctx.moveTo(x + 560, y + 30); ctx.lineTo(x + 568, y + 22); ctx.lineTo(x + 576, y + 30);
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke();
+      });
+    });
+  }
+}
+
+const chartWT = track([[0, 560], [18.6, 344]], 12, 0.85);
+function drawPhone(t, sh) {
+  layer(t, 16.3, 20.0, () => {
+    const L = sh.x - 200, T = sh.y - 400, sc = phoneScroll(t);
+    const y = v => T + v - sc;
+    txt('广告投放日看板', L + 28, y(96), 28, C.ink, 700);
+    txt('按日汇总 · 手机可看', L + 28, y(130), 17, C.muted);
+    ['曝光', '点击', '转化'].forEach((name, i) => {
+      const ty = y(160 + i * 104);
+      rr(L + 28, ty, 344, 90, 16); ctx.fillStyle = C.bg; ctx.fill();
+      txt(name, L + 48, ty + 45, 20, C.soft, 500);
+      spark(L + 150, ty + 24, 200, 42, SPARKS[i], 1, C.ink, 3);
+    });
+    const cw = chartWT(t), cy = y(480);
+    card(L + 28, cy, cw, 240, '投放趋势', () => {
+      const px = L + 50, pw = cw - 44, py = cy + 70, ph = 140;
+      const pts = LINE_B.map((v, i) => [px + pw * i / (LINE_B.length - 1), py + ph * (1 - v)]);
+      smoothPath(pts); ctx.strokeStyle = C.green; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.stroke();
+    });
+    const by = y(740);
+    card(L + 28, by, 344, 200, '各时段点击', () => {
+      BARS.forEach((v, i) => {
+        const hgt = 110 * v;
+        rr(L + 50 + i * 38, by + 170 - hgt, 26, hgt, 5); ctx.fillStyle = C.ink; ctx.fill();
+      });
+    });
+    // 发现问题：图表超出屏幕
+    layer(t, 17.7, 18.75, () => {
+      ctx.fillStyle = 'rgba(229,72,77,.08)'; ctx.fillRect(L + 300, cy - 6, 100, 252);
+      ctx.setLineDash([10, 8]);
+      rr(L + 300, cy - 6, 92, 252, 12); ctx.strokeStyle = C.red; ctx.lineWidth = 3; ctx.stroke();
+      ctx.setLineDash([]);
+    }, 4);
+    // 手机外框（刘海 + 边框）
+    rr(sh.x - sh.w / 2, sh.y - sh.h / 2, sh.w, sh.h, sh.r); ctx.strokeStyle = C.ink; ctx.lineWidth = 20; ctx.stroke();
+    rr(L + 145, T + 18, 110, 30, 15); ctx.fillStyle = C.ink; ctx.fill();
+  });
+}
+
+function drawPhoneSide(t, sh) {
+  // 右侧：问题提示 → 已自动修改
+  const px = sh.x + 240, py = sh.y - 40;
+  const pill = (w, fn) => {
+    ctx.save(); ctx.shadowColor = 'rgba(10,22,40,.12)'; ctx.shadowBlur = 24; ctx.shadowOffsetY = 8;
+    rr(px, py - 32, w, 64, 32); ctx.fillStyle = '#fff'; ctx.fill(); ctx.restore();
+    fn();
+  };
+  layer(t, 17.7, 18.6, () => pill(330, () => {
+    ctx.beginPath(); ctx.arc(px + 32, py, 8, 0, Math.PI * 2); ctx.fillStyle = C.red; ctx.fill();
+    txt('发现问题：图表超出屏幕', px + 52, py, 22, C.ink, 600);
+  }));
+  layer(t, 18.65, 19.9, () => pill(220, () => {
+    ctx.beginPath(); ctx.arc(px + 34, py, 14, 0, Math.PI * 2); ctx.fillStyle = C.green; ctx.fill();
+    check(px + 34, py, 16, '#fff', 3);
+    txt('已自动修改', px + 60, py, 22, C.ink, 600);
+  }));
+  // 左侧：验收结论
+  layer(t, 18.7, 20.0, () => {
+    const x = sh.x - 240 - 300, y = sh.y - 150;
+    ctx.save(); ctx.shadowColor = 'rgba(10,22,40,.18)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 10;
+    rr(x, y, 300, 300, 20); ctx.fillStyle = C.ink; ctx.fill(); ctx.restore();
+    checkItem(t, x + 38, y + 46, '页面展示', -1);
+    checkItem(t, x + 38, y + 96, '按钮点击', -1);
+    checkItem(t, x + 38, y + 146, '页面跳转', -1);
+    checkItem(t, x + 38, y + 196, '手机端适配', 19.1);
+    ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.fillRect(x + 24, y + 234, 252, 1.5);
+    popIn(t, 19.4, x + 150, y + 266, () => txt('验收完成，再交付', x + 24, y + 266, 22, C.green, 700));
+  });
+}
+
+function drawShare(t, sh) {
+  layer(t, 20.5, 24.4, () => {
+    const L = sh.x - 310, T = sh.y - 350;
+    ctx.beginPath(); ctx.arc(L + 48, T + 70, 7, 0, Math.PI * 2); ctx.fillStyle = C.green; ctx.fill();
+    txt('看板已上线', L + 66, T + 70, 34, C.ink, 700);
+    txt('扫码或点开链接即可使用', L + 40, T + 114, 21, C.muted);
+    // 二维码（示意图案）
+    const N = 25, size = 280, m = size / N, qx = L + 170, qy = T + 150;
+    const finder = (i, j) => {
+      for (const [fi, fj] of [[0, 0], [0, N - 7], [N - 7, 0]]) {
+        const a = i - fi, b = j - fj;
+        if (a >= 0 && a < 7 && b >= 0 && b < 7) return (a === 0 || a === 6 || b === 0 || b === 6 || (a >= 2 && a <= 4 && b >= 2 && b <= 4)) ? 1 : 0;
+      }
+      return -1;
+    };
+    ctx.fillStyle = C.ink;
+    for (let i = 0; i < N; i++) {
+      const ra = clamp01((t - 20.8 * B - i * 0.018) / 0.12);
+      if (ra <= 0) break;
+      ctx.globalAlpha = ra * vis(t, 20.5, 24.4);
+      for (let j = 0; j < N; j++) {
+        const f = finder(i, j);
+        const on = f === -1 ? qrHash(i, j) > 0.52 : f === 1;
+        if (on) ctx.fillRect(qx + j * m, qy + i * m, m + 0.5, m + 0.5);
+      }
+    }
+    ctx.globalAlpha = vis(t, 20.5, 24.4);
+    // 链接 + 复制按钮
+    rr(L + 40, T + 466, 360, 64, 14); ctx.fillStyle = C.bg; ctx.fill();
+    txt('https://••••••/ad-board', L + 62, T + 498, 20, C.soft, 500);
+    const p = press(t, 22.0);
+    scaled(L + 498, T + 498, 1 - 0.08 * p, () => {
+      rr(L + 416, T + 466, 164, 64, 14); ctx.fillStyle = C.green; ctx.fill();
+      const done = vis(t, 22.05, null);
+      ctx.save(); ctx.globalAlpha *= 1 - done; txt('复制链接', L + 498, T + 498, 22, '#fff', 700, 'center'); ctx.restore();
+      ctx.save(); ctx.globalAlpha *= done; txt('已复制', L + 498, T + 498, 22, '#fff', 700, 'center'); ctx.restore();
+    });
+    // 发给谁
+    txt('发给', L + 40, T + 598, 21, C.muted);
+    let cx = L + 96;
+    ['客户', '团队', '投资人'].forEach((s, i) => {
+      const w = textW(s, 21, 600) + 36, x = cx;
+      popIn(t, 22.8 + i * 0.25, x + w / 2, T + 598, () => {
+        rr(x, T + 576, w, 44, 22); ctx.fillStyle = C.bg; ctx.fill();
+        txt(s, x + w / 2, T + 598, 21, C.ink, 600, 'center');
+      });
+      cx += w + 10;
+    });
+    popIn(t, 23.5, L + 200, T + 656, () => txt('对方无需安装软件，点开即用', L + 40, T + 656, 21, C.soft, 500));
+  });
+}
+
+function drawToast(t, sh) {
+  layer(t, 22.15, 23.9, v => {
+    const y = sh.y - 400 - (1 - v) * 16;
+    rr(sh.x - 130, y - 32, 260, 64, 32); ctx.fillStyle = C.ink; ctx.fill();
+    ctx.beginPath(); ctx.arc(sh.x - 82, y, 14, 0, Math.PI * 2); ctx.fillStyle = C.green; ctx.fill();
+    check(sh.x - 82, y, 16, '#fff', 3);
+    txt('链接已复制', sh.x - 56, y, 24, '#fff', 600);
+  });
+}
+
+function drawClosing(t) {
+  layer(t, 30.4, 33.6, () => {
+    txt('360 出品 · 新一代 AI 工作平台', -360, -112, 26, '#0e9a60', 600);
+    txt('一人成军，百事可托', -364, -14, 104, C.ink, 800);
+    txt('现在，纳米Work 可以直接给你一个网址。', -360, 82, 38, C.soft, 500);
+  }, 12);
+}
+
+/* ---------- 底部步骤条（两条边挂不同弹簧，前沿先拉伸） ---------- */
+const stepIdx = [[0, 0], [13.0, 1], [20.2, 2], [24.6, 3]];
+const stepL = track(stepIdx, 9, 0.88), stepR = track(stepIdx, 18, 0.8);
+function drawStepper(t) {
+  layer(t, 8.2, 29.9, () => {
+    const seg = 170, x0 = W / 2 - seg * 2, y0 = 996;
+    rr(x0, y0, seg * 4, 52, 26); ctx.fillStyle = '#fff'; ctx.fill();
+    ctx.strokeStyle = C.line; ctx.lineWidth = 1.5; ctx.stroke();
+    const a = x0 + 5 + stepL(t) * seg, b = x0 + seg - 5 + stepR(t) * seg;
+    rr(a, y0 + 5, b - a, 42, 21); ctx.fillStyle = C.green; ctx.fill();
+    ['可生成', '可验收', '可分享', '可更新'].forEach((s, i) => {
+      const cx = x0 + seg * i + seg / 2, on = cx > a && cx < b;
+      txt(s, cx, y0 + 27, 21, on ? '#fff' : C.soft, on ? 700 : 500, 'center');
+    });
+  }, 6);
+}
+
+/* ---------- 光标 ---------- */
+function drawCursor(t, toScreen) {
+  const a = vis(t, 1.2, 29.3);
+  if (a < 0.004) return;
+  const [wx, wy] = cursorT(t), [sx, sy] = toScreen(wx, wy);
+  let down = 0;
+  CLICKS.forEach(c => { down = Math.max(down, press(t, c)); });
+  down = Math.max(down, clamp01(spring(t - HOLD[0] * B, 30, 1) - spring(t - HOLD[1] * B, 22, 1)));
+  ctx.save(); ctx.globalAlpha = a;
+  // 点击涟漪
+  [...CLICKS, HOLD[0]].forEach(c => {
+    const e = (t - c * B) / 0.45;
+    if (e > 0 && e < 1) {
+      ctx.beginPath(); ctx.arc(sx, sy, 10 + 34 * ease(e), 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(23,195,123,${(1 - e) * 0.6})`; ctx.lineWidth = 3; ctx.stroke();
+    }
+  });
+  ctx.translate(sx, sy); ctx.scale(1.35 * (1 - 0.14 * down), 1.35 * (1 - 0.14 * down));
+  ctx.beginPath();
+  ctx.moveTo(0, 0); ctx.lineTo(0, 34); ctx.lineTo(8.5, 26); ctx.lineTo(14.5, 39.5);
+  ctx.lineTo(20.5, 37); ctx.lineTo(14.8, 23.8); ctx.lineTo(26.5, 23.8); ctx.closePath();
+  ctx.fillStyle = C.ink; ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.4; ctx.lineJoin = 'round'; ctx.stroke();
+  ctx.restore();
+}
+
+/* ---------- draw(t)：唯一的绘制入口，纯函数 ---------- */
+function draw(t) {
+  t = ((t % DUR) + DUR) % DUR;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalAlpha = 1; ctx.filter = 'none';
+  ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+
+  const s = camS(t), oy = camY(t);
+  const toScreen = (x, y) => [W / 2 + x * s, H / 2 + oy + y * s];
+  ctx.setTransform(s, 0, 0, s, W / 2, H / 2 + oy);
+
+  const v = shapeT(t);
+  const sh = { x: v[0], y: v[1], w: v[2], h: v[3], r: v[4] };
+  const col = `rgb(${v.slice(5, 8).map(c => Math.round(Math.max(0, Math.min(255, c)))).join(',')})`;
+  const sx = sh.x - sh.w / 2, sy = sh.y - sh.h / 2;
+
+  ctx.save();
+  ctx.shadowColor = 'rgba(10,22,40,.10)'; ctx.shadowBlur = 48; ctx.shadowOffsetY = 14;
+  rr(sx, sy, sh.w, sh.h, sh.r); ctx.fillStyle = col; ctx.fill();
+  ctx.restore();
+  rr(sx, sy, sh.w, sh.h, sh.r); ctx.strokeStyle = 'rgba(26,36,54,.07)'; ctx.lineWidth = 1.5; ctx.stroke();
+
+  ctx.save();
+  rr(sx, sy, sh.w, sh.h, sh.r); ctx.clip();
+  drawLogoMark(t, sh);
+  drawInput(t, sh);
+  drawPill(t, sh);
+  layer(t, 8.3, 15.8, () => drawBrowser(t, sh, 1));
+  drawPhone(t, sh);
+  drawShare(t, sh);
+  layer(t, 24.9, 29.8, () => drawBrowser(t, sh, 2));
+  ctx.restore();
+
+  drawPhoneSide(t, sh);
+  drawToast(t, sh);
+  drawClosing(t);
+
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  drawStepper(t);
+  drawCursor(t, toScreen);
+}
+
+/* ---------- 播放 / 离线渲染接口 ---------- */
+const params = new URLSearchParams(location.search);
+const FILM = window.FILM = {
+  DUR, BEATS, B, draw,
+  // 一帧 = 多个子帧平均（运动模糊），返回 PNG dataURL
+  frame(i, fps = 60, sub = 6, shutter = 0.5) {
+    const acc = FILM._acc || (FILM._acc = Object.assign(document.createElement('canvas'), { width: W, height: H }));
+    const a = acc.getContext('2d');
+    for (let k = 0; k < sub; k++) {
+      draw(i / fps + (k / sub) * (shutter / fps));
+      a.globalAlpha = 1 / (k + 1); a.drawImage(canvas, 0, 0);
+    }
+    a.globalAlpha = 1;
+    return acc.toDataURL('image/png');
+  },
+  // 每拍一帧的缩略图检查表
+  sheet(times, cols = 6, cw = 480) {
+    const chh = cw * H / W, rows = Math.ceil(times.length / cols);
+    const sc = Object.assign(document.createElement('canvas'), { width: cols * cw, height: rows * chh });
+    const g = sc.getContext('2d');
+    g.fillStyle = '#fff'; g.fillRect(0, 0, sc.width, sc.height);
+    times.forEach((tt, i) => {
+      draw(tt);
+      const x = (i % cols) * cw, y = Math.floor(i / cols) * chh;
+      g.drawImage(canvas, x, y, cw, chh);
+      g.strokeStyle = '#c9d2df'; g.strokeRect(x + .5, y + .5, cw - 1, chh - 1);
+      g.fillStyle = '#1a2436'; g.font = '600 16px sans-serif'; g.fillText('beat ' + (tt / B).toFixed(2), x + 8, y + 20);
+    });
+    return sc.toDataURL('image/png');
+  },
+  ready: true
+};
+
+if (params.has('render')) {
+  document.body.classList.add('render');
+  draw(0);
+} else if (params.has('t')) {
+  draw(parseFloat(params.get('t')) || 0);
+} else {
+  // 实时播放：t 只由时钟决定；点击画布暂停 / 继续
+  let offset = 0, pausedAt = null;
+  canvas.addEventListener('click', () => {
+    const now = performance.now() / 1000;
+    if (pausedAt == null) pausedAt = now; else { offset += now - pausedAt; pausedAt = null; }
+  });
+  const loop = () => {
+    const now = pausedAt ?? performance.now() / 1000;
+    draw(now - offset);
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>
