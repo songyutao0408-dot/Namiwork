@@ -1,0 +1,397 @@
+{
+ "audio": "口播.wav",
+ "duration": 108.72,
+ "speech": [
+  0.309,
+  108.436
+ ],
+ "phrases": [
+  {
+   "para": 0,
+   "text": "每个老板都在想同一件事",
+   "kind": "mid",
+   "start": 0.309,
+   "end": 2.346,
+   "syl": 11,
+   "rate": 5.4
+  },
+  {
+   "para": 0,
+   "text": "客户从哪来",
+   "kind": "mid",
+   "start": 2.691,
+   "end": 3.758,
+   "syl": 5,
+   "rate": 4.68
+  },
+  {
+   "para": 0,
+   "text": "生意怎么做大",
+   "kind": "para",
+   "start": 3.99,
+   "end": 5.07,
+   "syl": 6,
+   "rate": 5.56
+  },
+  {
+   "para": 1,
+   "text": "AI时代",
+   "kind": "mid",
+   "start": 5.874,
+   "end": 6.61,
+   "syl": 4,
+   "rate": 5.44
+  },
+  {
+   "para": 1,
+   "text": "答案变了",
+   "kind": "end",
+   "start": 6.92,
+   "end": 7.521,
+   "syl": 4,
+   "rate": 6.65
+  },
+  {
+   "para": 1,
+   "text": "以前你靠人海战术、靠经验、靠试错",
+   "kind": "mid",
+   "start": 8.159,
+   "end": 11.501,
+   "syl": 14,
+   "rate": 4.75
+  },
+  {
+   "para": 1,
+   "text": "现在",
+   "kind": "mid",
+   "start": 12.033,
+   "end": 12.499,
+   "syl": 2,
+   "rate": 4.3
+  },
+  {
+   "para": 1,
+   "text": "一个AI工作台就能帮你从获客到成交",
+   "kind": "mid",
+   "start": 12.714,
+   "end": 16.509,
+   "syl": 17,
+   "rate": 4.83
+  },
+  {
+   "para": 1,
+   "text": "把整条链路跑通",
+   "kind": "para",
+   "start": 16.653,
+   "end": 18.134,
+   "syl": 7,
+   "rate": 5.01
+  },
+  {
+   "para": 2,
+   "text": "这就是纳米Work企业版",
+   "kind": "mid",
+   "start": 19.036,
+   "end": 20.998,
+   "syl": 10,
+   "rate": 5.54
+  },
+  {
+   "para": 2,
+   "text": "360打造的企业AI工作台",
+   "kind": "para",
+   "start": 21.538,
+   "end": 24.246,
+   "syl": 13,
+   "rate": 5.36
+  },
+  {
+   "para": 3,
+   "text": "它不是一个聊天机器人",
+   "kind": "mid",
+   "start": 25.052,
+   "end": 27.052,
+   "syl": 10,
+   "rate": 5.19
+  },
+  {
+   "para": 3,
+   "text": "而是一整支随时待命的AI专家团队",
+   "kind": "end",
+   "start": 27.052,
+   "end": 30.19,
+   "syl": 16,
+   "rate": 5.42
+  },
+  {
+   "para": 3,
+   "text": "500多位AI专家覆盖营销获客、内容创作、视频制作、数据分析、投标撰写等核心场景",
+   "kind": "mid",
+   "start": 31.061,
+   "end": 39.786,
+   "syl": 35,
+   "rate": 4.57
+  },
+  {
+   "para": 3,
+   "text": "开箱即用",
+   "kind": "mid",
+   "start": 40.316,
+   "end": 41.092,
+   "syl": 4,
+   "rate": 5.16
+  },
+  {
+   "para": 3,
+   "text": "上手就能干活",
+   "kind": "para",
+   "start": 41.335,
+   "end": 42.575,
+   "syl": 6,
+   "rate": 4.84
+  },
+  {
+   "para": 4,
+   "text": "小红书运营、短视频投流、SEO优化、海报设计、宣传片制作",
+   "kind": "mid",
+   "start": 43.624,
+   "end": 49.342,
+   "syl": 24,
+   "rate": 4.97
+  },
+  {
+   "para": 4,
+   "text": "过去要找好几个人干的事",
+   "kind": "mid",
+   "start": 49.784,
+   "end": 51.823,
+   "syl": 11,
+   "rate": 5.66
+  },
+  {
+   "para": 4,
+   "text": "现在一句话就能出稿",
+   "kind": "end",
+   "start": 52.126,
+   "end": 53.911,
+   "syl": 9,
+   "rate": 5.91
+  },
+  {
+   "para": 4,
+   "text": "做对一次",
+   "kind": "mid",
+   "start": 54.553,
+   "end": 55.391,
+   "syl": 4,
+   "rate": 4.78
+  },
+  {
+   "para": 4,
+   "text": "还能把经验变成技能",
+   "kind": "mid",
+   "start": 55.629,
+   "end": 57.236,
+   "syl": 9,
+   "rate": 5.6
+  },
+  {
+   "para": 4,
+   "text": "全团队一键复用",
+   "kind": "para",
+   "start": 57.48,
+   "end": 59.155,
+   "syl": 7,
+   "rate": 4.18
+  },
+  {
+   "para": 5,
+   "text": "更关键的是",
+   "kind": "mid",
+   "start": 60.27,
+   "end": 61.485,
+   "syl": 5,
+   "rate": 4.11
+  },
+  {
+   "para": 5,
+   "text": "它不只是工具",
+   "kind": "mid",
+   "start": 61.572,
+   "end": 62.451,
+   "syl": 6,
+   "rate": 6.83
+  },
+  {
+   "para": 5,
+   "text": "而是真正能融进你业务的平台",
+   "kind": "end",
+   "start": 62.735,
+   "end": 65.051,
+   "syl": 13,
+   "rate": 5.83
+  },
+  {
+   "para": 5,
+   "text": "纳米Work可以直连企业现有的ERP、CRM、OA等业务系统",
+   "kind": "mid",
+   "start": 65.956,
+   "end": 71.387,
+   "syl": 26,
+   "rate": 5.58
+  },
+  {
+   "para": 5,
+   "text": "AI直接在你的系统里干活",
+   "kind": "mid",
+   "start": 71.981,
+   "end": 74.234,
+   "syl": 12,
+   "rate": 5.62
+  },
+  {
+   "para": 5,
+   "text": "不用换平台",
+   "kind": "mid",
+   "start": 74.611,
+   "end": 75.709,
+   "syl": 5,
+   "rate": 4.55
+  },
+  {
+   "para": 5,
+   "text": "不用改流程",
+   "kind": "end",
+   "start": 75.876,
+   "end": 76.806,
+   "syl": 5,
+   "rate": 5.38
+  },
+  {
+   "para": 5,
+   "text": "同时不绑定任何单一生态",
+   "kind": "mid",
+   "start": 77.69,
+   "end": 80.021,
+   "syl": 11,
+   "rate": 5.28
+  },
+  {
+   "para": 5,
+   "text": "飞书、钉钉、企业微信",
+   "kind": "mid",
+   "start": 80.504,
+   "end": 83.025,
+   "syl": 8,
+   "rate": 4.24
+  },
+  {
+   "para": 5,
+   "text": "你用什么它就接什么",
+   "kind": "para",
+   "start": 83.153,
+   "end": 84.845,
+   "syl": 9,
+   "rate": 6.05
+  },
+  {
+   "para": 6,
+   "text": "安全方面",
+   "kind": "mid",
+   "start": 86.005,
+   "end": 86.769,
+   "syl": 4,
+   "rate": 6.0
+  },
+  {
+   "para": 6,
+   "text": "360二十年安全基因打底",
+   "kind": "mid",
+   "start": 86.93,
+   "end": 89.137,
+   "syl": 12,
+   "rate": 5.61
+  },
+  {
+   "para": 6,
+   "text": "算力消耗清晰可查",
+   "kind": "mid",
+   "start": 89.474,
+   "end": 91.431,
+   "syl": 8,
+   "rate": 4.47
+  },
+  {
+   "para": 6,
+   "text": "数据权限分级管控",
+   "kind": "mid",
+   "start": 91.739,
+   "end": 93.745,
+   "syl": 8,
+   "rate": 4.58
+  },
+  {
+   "para": 6,
+   "text": "每一步操作都有迹可循",
+   "kind": "para",
+   "start": 93.855,
+   "end": 96.094,
+   "syl": 10,
+   "rate": 5.02
+  },
+  {
+   "para": 7,
+   "text": "睡前布置任务",
+   "kind": "mid",
+   "start": 97.111,
+   "end": 98.091,
+   "syl": 6,
+   "rate": 6.12
+  },
+  {
+   "para": 7,
+   "text": "醒来验收结果",
+   "kind": "end",
+   "start": 98.356,
+   "end": 99.625,
+   "syl": 6,
+   "rate": 5.04
+  },
+  {
+   "para": 7,
+   "text": "7×24小时云端常驻",
+   "kind": "mid",
+   "start": 100.153,
+   "end": 102.362,
+   "syl": 11,
+   "rate": 4.98
+  },
+  {
+   "para": 7,
+   "text": "关了电脑照样干",
+   "kind": "para",
+   "start": 102.55,
+   "end": 104.174,
+   "syl": 7,
+   "rate": 5.2
+  },
+  {
+   "para": 8,
+   "text": "纳米Work企业版",
+   "kind": "mid",
+   "start": 105.191,
+   "end": 106.375,
+   "syl": 7,
+   "rate": 6.59
+  },
+  {
+   "para": 8,
+   "text": "让AI真正帮你赚钱",
+   "kind": "para",
+   "start": 106.493,
+   "end": 108.436,
+   "syl": 9,
+   "rate": 5.57
+  }
+ ]
+}
